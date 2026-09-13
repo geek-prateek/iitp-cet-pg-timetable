@@ -179,6 +179,7 @@ if (saveProfileBtn) {
             
             // FIX: Update local memory so opening settings works immediately
             currentUserDoc = profileData;
+            window.initChatListener();
             
             profileOverlay.style.display = "none";
             mainApp.style.display = "block";
@@ -209,68 +210,115 @@ function formatMessageText(text) {
     return escapedText.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; word-break: break-all;">$1</a>');
 }
 
+let chatInitialized = false;
+
+window.initChatListener = () => {
+    if (!currentUserDoc || chatInitialized) return;
+    
+    // Request Browser Notification Permission
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+
+    const chatGroupName = document.getElementById("chatGroupName");
+    const chatMessages = document.getElementById("chatMessages");
+    chatGroupName.textContent = `${currentUserDoc.degree} - ${currentUserDoc.specialization}`;
+    
+    const q = query(collection(db, "chats", currentUserDoc.batchGroupId, "messages"), orderBy("timestamp"));
+    
+    let isInitialLoad = true;
+    chatInitialized = true;
+    
+    unsubChat = onSnapshot(q, (snapshot) => {
+        chatMessages.innerHTML = "";
+        if (snapshot.empty) {
+            chatMessages.innerHTML = `<p class="muted" style="text-align: center; font-size: 0.9rem; margin-top: 20px;">Welcome to your class group! Send a message to start.</p>`;
+            isInitialLoad = false;
+            return;
+        }
+        
+        let hasNewExternalMessage = false;
+        
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const isMe = data.email === auth.currentUser.email;
+            const rollNumber = data.email.split('@')[0];
+            
+            // Check for notifications
+            if (!isInitialLoad && !isMe) {
+                // If this specific doc is new (since last snapshot)
+                // Firestore snapshot sends all docs, but we can rely on isInitialLoad
+                // for basic notification when the DB updates.
+                hasNewExternalMessage = true;
+            }
+            
+            const bubble = document.createElement("div");
+            bubble.style.cssText = `max-width: 75%; padding: 10px 14px; border-radius: 12px; margin-bottom: 4px; display: inline-block; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.1);`;
+            
+            if (isMe) {
+                bubble.style.background = "#dcf8c6";
+                bubble.style.alignSelf = "flex-end";
+                bubble.style.borderBottomRightRadius = "0";
+            } else {
+                bubble.style.background = "white";
+                bubble.style.alignSelf = "flex-start";
+                bubble.style.borderBottomLeftRadius = "0";
+            }
+            
+            let html = "";
+            if (!isMe) {
+                html += `<div style="font-size: 0.75rem; color: var(--navy); font-weight: bold; margin-bottom: 4px;">${rollNumber}</div>`;
+            }
+            
+            const safeFormattedText = formatMessageText(data.text);
+            html += `<div style="font-size: 0.95rem; line-height: 1.4;">${safeFormattedText}</div>`;
+            
+            if (data.timestamp) {
+                const date = data.timestamp.toDate();
+                const timeString = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                html += `<div style="font-size: 0.65rem; color: #667781; text-align: right; margin-top: 4px;">${timeString}</div>`;
+            }
+            
+            bubble.innerHTML = html;
+            chatMessages.appendChild(bubble);
+        });
+        
+        // Handle Notifications if chat is hidden
+        const chatOverlay = document.getElementById("chatOverlay");
+        if (hasNewExternalMessage && chatOverlay.style.display !== "flex") {
+            const chatBtn = document.getElementById("chatHeaderBtn");
+            if (chatBtn) {
+                chatBtn.innerHTML = `💬 Class Chat <span style="background: #ef4444; color: white; border-radius: 12px; padding: 2px 6px; font-size: 11px; margin-left: 4px; font-weight: bold;">New</span>`;
+            }
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("New message in Class Chat", {
+                    body: "Check the timetable portal to reply.",
+                    icon: "assets/iitp-seal.png"
+                });
+            }
+        } else if (chatOverlay.style.display === "flex") {
+            // Scroll to bottom immediately if open
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        isInitialLoad = false;
+    });
+};
+
 window.openChat = () => {
     if (!currentUserDoc) {
         document.getElementById("profileOverlay").style.display = "flex";
     } else {
         const chatOverlay = document.getElementById("chatOverlay");
-        const chatGroupName = document.getElementById("chatGroupName");
-        const chatMessages = document.getElementById("chatMessages");
-        
-        chatGroupName.textContent = `${currentUserDoc.degree} - ${currentUserDoc.specialization}`;
         chatOverlay.style.display = "flex";
         
-        if (unsubChat) unsubChat();
+        // Remove the New notification badge
+        const chatBtn = document.getElementById("chatHeaderBtn");
+        if (chatBtn) chatBtn.innerHTML = "💬 Class Chat";
         
-        const q = query(
-            collection(db, "chats", currentUserDoc.batchGroupId, "messages"), 
-            orderBy("timestamp")
-        );
-        
-        unsubChat = onSnapshot(q, (snapshot) => {
-            chatMessages.innerHTML = "";
-            if (snapshot.empty) {
-                chatMessages.innerHTML = `<p class="muted" style="text-align: center; font-size: 0.9rem; margin-top: 20px;">Welcome to your class group! Send a message to start.</p>`;
-                return;
-            }
-            
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const isMe = data.email === auth.currentUser.email;
-                const rollNumber = data.email.split('@')[0];
-                
-                const bubble = document.createElement("div");
-                bubble.style.cssText = `max-width: 75%; padding: 10px 14px; border-radius: 12px; margin-bottom: 4px; display: inline-block; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.1);`;
-                
-                if (isMe) {
-                    bubble.style.background = "#dcf8c6";
-                    bubble.style.alignSelf = "flex-end";
-                    bubble.style.borderBottomRightRadius = "0";
-                } else {
-                    bubble.style.background = "white";
-                    bubble.style.alignSelf = "flex-start";
-                    bubble.style.borderBottomLeftRadius = "0";
-                }
-                
-                let html = "";
-                if (!isMe) {
-                    html += `<div style="font-size: 0.75rem; color: var(--navy); font-weight: bold; margin-bottom: 4px;">${rollNumber}</div>`;
-                }
-                
-                const safeFormattedText = formatMessageText(data.text);
-                html += `<div style="font-size: 0.95rem; line-height: 1.4;">${safeFormattedText}</div>`;
-                
-                if (data.timestamp) {
-                    const date = data.timestamp.toDate();
-                    const timeString = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    html += `<div style="font-size: 0.65rem; color: #667781; text-align: right; margin-top: 4px;">${timeString}</div>`;
-                }
-                
-                bubble.innerHTML = html;
-                chatMessages.appendChild(bubble);
-            });
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        });
+        // Scroll to bottom
+        const chatMessages = document.getElementById("chatMessages");
+        setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 100);
     }
 };
 
@@ -356,6 +404,7 @@ onAuthStateChanged(auth, async (user) => {
             const userSnap = await getDoc(doc(db, "users", user.uid));
             if (userSnap.exists()) {
                 currentUserDoc = userSnap.data();
+                window.initChatListener();
             }
         } catch (err) {
             console.error("Firestore error:", err);

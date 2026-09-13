@@ -525,6 +525,28 @@ document.getElementById("resourceForm")?.addEventListener("submit", async (e) =>
   }
 });
 
+function renderHoliday() {
+  const container = document.getElementById("upcomingHoliday");
+  if (!container || !HOLIDAYS || HOLIDAYS.length === 0) return;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // reset time for accurate date comparison
+  
+  // Find the first holiday that is today or in the future
+  const upcoming = HOLIDAYS.find(h => new Date(h.date) >= today);
+  
+  if (upcoming) {
+    const holidayDate = new Date(upcoming.date);
+    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    const formattedDate = holidayDate.toLocaleDateString('en-IN', options);
+    
+    container.style.display = "flex";
+    container.innerHTML = `<span style="font-size: 1.1em; line-height: 1;">🎉</span> <div><span style="opacity: 0.85;">Upcoming:</span> <b>${upcoming.name}</b> <br/><span style="opacity: 0.75; font-size: 0.9em;">${formattedDate}</span></div>`;
+  } else {
+    container.style.display = "none";
+  }
+}
+
 function renderAll() {
   updateHeaders();
   renderImportantLinks();
@@ -532,6 +554,7 @@ function renderAll() {
   renderCourses();
   renderToday();
   renderNotification();
+  renderHoliday();
 }
 
 document.querySelectorAll("[data-filter]").forEach(button => {
