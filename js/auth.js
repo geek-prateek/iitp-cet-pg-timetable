@@ -13,6 +13,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+window.getFirebaseToken = async () => {
+    return auth.currentUser ? await auth.currentUser.getIdToken() : null;
+};
+
 const loginOverlay = document.getElementById("loginOverlay");
 const mainApp = document.getElementById("mainApp");
 const emailInput = document.getElementById("emailInput");
@@ -98,10 +102,16 @@ if (emailInput) {
     });
 }
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user && user.email.endsWith("@iitp.ac.in")) {
         loginOverlay.style.display = "none";
         mainApp.style.display = "block";
+        
+        // Fetch the ID token and load the secure data from the backend
+        const token = await user.getIdToken();
+        if (typeof window.loadSecureData === "function") {
+            window.loadSecureData(token);
+        }
         
         const actionsDiv = document.querySelector(".topbar .actions");
         if (actionsDiv && !document.getElementById("logoutBtn")) {

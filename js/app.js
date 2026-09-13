@@ -415,12 +415,18 @@ function renderNotification() {
   }
 }
 
-async function fetchResources() {
+async function fetchResources(token) {
   try {
-    const res = await fetch("https://iitp-timetable-admin-eight.vercel.app/api/resources", { cache: "no-store" });
+    const headers = { "cache-control": "no-store" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch("https://iitp-timetable-admin-eight.vercel.app/api/resources", { headers });
+    
     if (res.ok) {
       RESOURCES = await res.json();
       renderResources();
+    } else {
+      console.error("Backend refused access to resources.");
     }
   } catch (error) {
     console.error("Failed to fetch resources.", error);
@@ -498,9 +504,13 @@ document.getElementById("resourceForm")?.addEventListener("submit", async (e) =>
   };
 
   try {
+    const token = typeof window.getFirebaseToken === "function" ? await window.getFirebaseToken() : null;
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
     const res = await fetch("https://iitp-timetable-admin-eight.vercel.app/api/resources", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: headers,
       body: JSON.stringify(newRes)
     });
     if (!res.ok) throw new Error("Failed to submit");
@@ -554,9 +564,15 @@ document.getElementById("todayBtn").addEventListener("click", () => {
 
 document.querySelector('[data-filter="all"]').classList.add("active");
 
-async function initApp() {
+async function initApp(token) {
   try {
-    const res = await fetch("https://iitp-timetable-admin-eight.vercel.app/api/timetable", { cache: "no-store" });
+    const headers = { "cache-control": "no-store" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    
+    const res = await fetch("https://iitp-timetable-admin-eight.vercel.app/api/timetable", { 
+      headers 
+    });
+    
     if (res.ok) {
       const dynamicData = await res.json();
       PROGRAMS = dynamicData.PROGRAMS || PROGRAMS;
@@ -567,6 +583,8 @@ async function initApp() {
       HOLIDAYS = dynamicData.HOLIDAYS || HOLIDAYS;
       NOTIFICATION = dynamicData.notification || "";
       window.ASSIGNMENTS = dynamicData.ASSIGNMENTS || [];
+    } else {
+      console.error("Backend refused access. Invalid or missing token.");
     }
   } catch (error) {
     console.error("Failed to fetch dynamic timetable data, using fallback.", error);
@@ -577,8 +595,12 @@ async function initApp() {
   renderAll();
 }
 
-initApp();
-fetchResources();
+// We expose this globally so auth.js can call it once the user is verified
+window.loadSecureData = async (token) => {
+  await initApp(token);
+  await fetchResources(token);
+};
+
 
 window.scrollToTimetableClass = function(courseId, time, day) {
   const timetable = document.getElementById('timetable');
