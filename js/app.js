@@ -541,7 +541,7 @@ function renderHoliday() {
     const formattedDate = holidayDate.toLocaleDateString('en-IN', options);
     
     container.style.display = "flex";
-    container.innerHTML = `<span>🎉</span> Upcoming Holiday: ${upcoming.name} (${formattedDate})`;
+    container.innerHTML = `<span style="font-size: 1.1em; line-height: 1;">🎉</span> <div><span style="opacity: 0.85;">Upcoming:</span> <b>${upcoming.name}</b> <br/><span style="opacity: 0.75; font-size: 0.9em;">${formattedDate}</span></div>`;
   } else {
     container.style.display = "none";
   }
