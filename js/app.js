@@ -417,10 +417,13 @@ function renderNotification() {
 
 async function fetchResources(token) {
   try {
-    const headers = { "cache-control": "no-store" };
+    const headers = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const res = await fetch("https://iitp-timetable-admin-eight.vercel.app/api/resources", { headers });
+    const res = await fetch("https://iitp-timetable-admin-eight.vercel.app/api/resources", { 
+      headers,
+      cache: "no-store" 
+    });
     
     if (res.ok) {
       RESOURCES = await res.json();
@@ -589,11 +592,12 @@ document.querySelector('[data-filter="all"]').classList.add("active");
 
 async function initApp(token) {
   try {
-    const headers = { "cache-control": "no-store" };
+    const headers = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
     
     const res = await fetch("https://iitp-timetable-admin-eight.vercel.app/api/timetable", { 
-      headers 
+      headers,
+      cache: "no-store"
     });
     
     if (res.ok) {
