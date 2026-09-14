@@ -630,6 +630,20 @@ window.loadSecureData = async (token) => {
   await fetchResources(token);
 };
 
+// Clear sensitive data on logout
+window.clearSecureData = () => {
+  RESOURCES = [];
+  const grid = document.getElementById("resourceGrid");
+  if (grid) {
+    grid.innerHTML = `
+      <div style="text-align: center; padding: 20px;">
+        <p class="muted" style="margin-bottom: 12px;">Sign in to view class resources, books, and previous year questions.</p>
+        <button class="btn primary" onclick="window.requireAuth(() => window.openProfileSettings())" style="background-color: var(--navy); padding: 8px 16px;">👤 Sign In</button>
+      </div>
+    `;
+  }
+};
+
 
 window.scrollToTimetableClass = function(courseId, time, day) {
   const timetable = document.getElementById('timetable');

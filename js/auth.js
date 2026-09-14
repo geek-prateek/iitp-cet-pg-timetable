@@ -510,6 +510,9 @@ onAuthStateChanged(auth, async (user) => {
     } else {
         // Logged out state
         currentUserDoc = null;
+        if (typeof window.clearSecureData === "function") {
+            window.clearSecureData();
+        }
         if (authActionBtn) {
             authActionBtn.innerHTML = `👤 Sign In`;
             authActionBtn.onclick = () => window.requireAuth(() => window.openProfileSettings());
