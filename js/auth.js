@@ -112,12 +112,15 @@ if (sendLinkBtn) {
     sendLinkBtn.addEventListener("click", handleSendLink);
 }
 
-const loginWithPasswordBtn = document.getElementById("loginWithPasswordBtn");
-if (loginWithPasswordBtn) {
-    loginWithPasswordBtn.addEventListener("click", async () => {
+const loginForm = document.getElementById("loginForm");
+if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault(); // Prevent page reload
+        
         const email = emailInput.value.trim().toLowerCase();
         const passwordInput = document.getElementById("loginPassword");
         const password = passwordInput ? passwordInput.value : "";
+        const loginWithPasswordBtn = document.getElementById("loginWithPasswordBtn");
         
         if (!email || !password) {
             showMessage("Please enter both email and password.", true);
@@ -128,8 +131,10 @@ if (loginWithPasswordBtn) {
             return;
         }
 
-        loginWithPasswordBtn.disabled = true;
-        loginWithPasswordBtn.textContent = "Logging in...";
+        if (loginWithPasswordBtn) {
+            loginWithPasswordBtn.disabled = true;
+            loginWithPasswordBtn.textContent = "Logging in...";
+        }
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
@@ -138,17 +143,21 @@ if (loginWithPasswordBtn) {
             console.error("Password Login Error:", error);
             showMessage("Invalid email or password. Use Magic Link if you haven't set a password.", true);
         } finally {
-            loginWithPasswordBtn.disabled = false;
-            loginWithPasswordBtn.textContent = "Login";
+            if (loginWithPasswordBtn) {
+                loginWithPasswordBtn.disabled = false;
+                loginWithPasswordBtn.textContent = "Login";
+            }
         }
     });
 }
 
-const setPasswordBtn = document.getElementById("setPasswordBtn");
-if (setPasswordBtn) {
-    setPasswordBtn.addEventListener("click", async () => {
+const profilePasswordForm = document.getElementById("profilePasswordForm");
+if (profilePasswordForm) {
+    profilePasswordForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
         const passInput = document.getElementById("profileSetupPassword");
         const msgEl = document.getElementById("passwordMessage");
+        const setPasswordBtn = document.getElementById("setPasswordBtn");
         if (!passInput || !msgEl) return;
 
         const newPassword = passInput.value;
@@ -158,8 +167,10 @@ if (setPasswordBtn) {
             return;
         }
 
-        setPasswordBtn.disabled = true;
-        setPasswordBtn.textContent = "Saving...";
+        if (setPasswordBtn) {
+            setPasswordBtn.disabled = true;
+            setPasswordBtn.textContent = "Saving...";
+        }
         
         try {
             await updatePassword(auth.currentUser, newPassword);
@@ -175,13 +186,15 @@ if (setPasswordBtn) {
             }
             msgEl.style.color = "#dc2626";
         } finally {
-            setPasswordBtn.disabled = false;
-            setPasswordBtn.textContent = "Save Password";
+            if (setPasswordBtn) {
+                setPasswordBtn.disabled = false;
+                setPasswordBtn.textContent = "Save Password";
+            }
         }
     });
 }
 
-const promptSetPasswordBtn = document.getElementById("promptSetPasswordBtn");
+const promptPasswordForm = document.getElementById("promptPasswordForm");
 const promptSkipBtn = document.getElementById("promptSkipBtn");
 const passwordPromptModal = document.getElementById("passwordPromptModal");
 
@@ -191,10 +204,12 @@ if (promptSkipBtn && passwordPromptModal) {
     });
 }
 
-if (promptSetPasswordBtn && passwordPromptModal) {
-    promptSetPasswordBtn.addEventListener("click", async () => {
+if (promptPasswordForm && passwordPromptModal) {
+    promptPasswordForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
         const passInput = document.getElementById("promptSetupPassword");
         const msgEl = document.getElementById("promptPasswordMessage");
+        const promptSetPasswordBtn = document.getElementById("promptSetPasswordBtn");
         if (!passInput || !msgEl) return;
 
         const newPassword = passInput.value;
@@ -204,8 +219,10 @@ if (promptSetPasswordBtn && passwordPromptModal) {
             return;
         }
 
-        promptSetPasswordBtn.disabled = true;
-        promptSetPasswordBtn.textContent = "Saving...";
+        if (promptSetPasswordBtn) {
+            promptSetPasswordBtn.disabled = true;
+            promptSetPasswordBtn.textContent = "Saving...";
+        }
         
         try {
             await updatePassword(auth.currentUser, newPassword);
@@ -218,24 +235,11 @@ if (promptSetPasswordBtn && passwordPromptModal) {
             console.error("Error setting password:", error);
             msgEl.textContent = "Error setting password. Try again.";
             msgEl.style.color = "#dc2626";
-            promptSetPasswordBtn.disabled = false;
-            promptSetPasswordBtn.textContent = "Set Password";
+            if (promptSetPasswordBtn) {
+                promptSetPasswordBtn.disabled = false;
+                promptSetPasswordBtn.textContent = "Set Password";
+            }
         }
-    });
-}
-if (emailInput) {
-    emailInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-            const pwd = document.getElementById("loginPassword");
-            if (pwd && pwd.value) loginWithPasswordBtn.click();
-            else handleSendLink();
-        }
-    });
-}
-const loginPasswordInput = document.getElementById("loginPassword");
-if (loginPasswordInput) {
-    loginPasswordInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") loginWithPasswordBtn.click();
     });
 }
 
@@ -521,6 +525,12 @@ onAuthStateChanged(auth, async (user) => {
     if (user && user.email.endsWith("@iitp.ac.in")) {
         loginOverlay.style.display = "none";
         
+        // Populate hidden email fields for password manager autofill
+        const promptHiddenEmail = document.getElementById("promptHiddenEmail");
+        if (promptHiddenEmail) promptHiddenEmail.value = user.email;
+        const profileHiddenEmail = document.getElementById("profileHiddenEmail");
+        if (profileHiddenEmail) profileHiddenEmail.value = user.email;
+
         try {
             // Always show timetable immediately after login
             mainApp.style.display = "block";
