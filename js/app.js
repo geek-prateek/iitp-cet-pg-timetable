@@ -479,6 +479,16 @@ function renderResources() {
 }
 
 document.getElementById("addResourceBtn")?.addEventListener("click", () => {
+  if (typeof window.requireAuth === "function") {
+    window.requireAuth(() => {
+      toggleResourceForm();
+    });
+  } else {
+    toggleResourceForm();
+  }
+});
+
+function toggleResourceForm() {
   const container = document.getElementById("resourceFormContainer");
   const subjSelect = document.getElementById("resSubject");
   if (subjSelect && subjSelect.options.length <= 2) {
@@ -490,7 +500,7 @@ document.getElementById("addResourceBtn")?.addEventListener("click", () => {
     });
   }
   container.style.display = container.style.display === "none" ? "block" : "none";
-});
+}
 
 document.getElementById("resourceForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -637,7 +647,7 @@ window.clearSecureData = () => {
   if (grid) {
     grid.innerHTML = `
       <div style="text-align: center; padding: 20px;">
-        <p class="muted" style="margin-bottom: 12px;">Sign in to view class resources, books, and previous year questions.</p>
+        <p class="muted" style="margin-bottom: 12px;">Sign in to access shared class resources, books, and previous year questions.</p>
         <button class="btn primary" onclick="window.requireAuth(() => window.openProfileSettings())" style="background-color: var(--navy); padding: 8px 16px;">👤 Sign In</button>
       </div>
     `;
