@@ -18,11 +18,11 @@
     <h1 style="color: var(--navy); margin-bottom: 8px;">IIT Patna Timetable</h1>
     <p style="color: var(--muted); margin-bottom: 24px; max-width: 400px; line-height: 1.5;">Enter your official IIT Patna email to access the timetable.</p>
     
-    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px;">
-      <input type="email" id="emailInput" placeholder="name_2421cs12@iitp.ac.in" style="padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 16px; outline: none; width: 100%; box-sizing: border-box;" />
-      <input type="password" id="loginPassword" placeholder="Password (leave blank for Magic Link)" style="padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 16px; outline: none; width: 100%; box-sizing: border-box;" />
+    <form id="loginForm" style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px;">
+      <input type="email" id="emailInput" name="email" autocomplete="username" placeholder="name_2421cs12@iitp.ac.in" style="padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 16px; outline: none; width: 100%; box-sizing: border-box;" required />
+      <input type="password" id="loginPassword" name="password" autocomplete="current-password" placeholder="Password (leave blank for Magic Link)" style="padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 16px; outline: none; width: 100%; box-sizing: border-box;" />
       
-      <button id="loginWithPasswordBtn" class="btn primary" style="padding: 14px 24px; font-size: 16px; border-radius: 12px; box-shadow: var(--shadow); width: 100%;">
+      <button type="submit" id="loginWithPasswordBtn" class="btn primary" style="padding: 14px 24px; font-size: 16px; border-radius: 12px; box-shadow: var(--shadow); width: 100%;">
         Login
       </button>
       <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0;">
@@ -30,10 +30,10 @@
         <span style="font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase;">Or First Time?</span>
         <div style="height: 1px; background: var(--border); flex: 1;"></div>
       </div>
-      <button id="sendLinkBtn" class="btn secondary" style="padding: 12px 24px; font-size: 15px; border-radius: 12px; border: 1px solid var(--border); background: white; color: var(--navy); font-weight: 600; cursor: pointer; width: 100%;">
+      <button type="button" id="sendLinkBtn" class="btn secondary" style="padding: 12px 24px; font-size: 15px; border-radius: 12px; border: 1px solid var(--border); background: white; color: var(--navy); font-weight: 600; cursor: pointer; width: 100%;">
         Send Magic Link
       </button>
-    </div>
+    </form>
     <p id="loginMessage" style="font-weight: 600; margin-top: 16px; min-height: 20px; padding: 0 10px;"></p>
   </div>
 
@@ -43,16 +43,17 @@
       <h2 style="color: var(--navy); margin-bottom: 12px; margin-top: 0;">Create a Password?</h2>
       <p style="color: var(--muted); margin-bottom: 24px; line-height: 1.4; font-size: 0.95rem;">Tired of checking your email for magic links? Set a password now for instant login next time.</p>
       
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <input type="password" id="promptSetupPassword" placeholder="Minimum 6 characters" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 16px; box-sizing: border-box; outline: none;" />
+      <form id="promptPasswordForm" style="display: flex; flex-direction: column; gap: 12px;">
+        <input type="text" autocomplete="username" style="display:none" aria-hidden="true" value="" id="promptHiddenEmail" />
+        <input type="password" id="promptSetupPassword" name="new-password" autocomplete="new-password" placeholder="Minimum 6 characters" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 16px; box-sizing: border-box; outline: none;" required />
         <p id="promptPasswordMessage" style="font-size: 0.85rem; font-weight: 600; min-height: 16px; margin: 0;"></p>
-        <button id="promptSetPasswordBtn" class="btn primary" style="padding: 14px; font-size: 16px; border-radius: 12px; width: 100%;">
+        <button type="submit" id="promptSetPasswordBtn" class="btn primary" style="padding: 14px; font-size: 16px; border-radius: 12px; width: 100%;">
           Set Password
         </button>
-        <button id="promptSkipBtn" class="btn secondary" style="padding: 10px; font-size: 15px; border-radius: 12px; border: none; background: transparent; color: #64748b; font-weight: 600; cursor: pointer; width: 100%; text-decoration: underline;">
+        <button type="button" id="promptSkipBtn" class="btn secondary" style="padding: 10px; font-size: 15px; border-radius: 12px; border: none; background: transparent; color: #64748b; font-weight: 600; cursor: pointer; width: 100%; text-decoration: underline;">
           Skip for now
         </button>
-      </div>
+      </form>
     </div>
   </div>
 
@@ -95,15 +96,16 @@
           Join Class Group
         </button>
 
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <form id="profilePasswordForm" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
           <h3 style="font-size: 1.1rem; color: var(--navy); margin-bottom: 6px;">Set Login Password (Optional)</h3>
           <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 12px;">Set a password so you don't need to use Magic Links next time.</p>
-          <input type="password" id="profileSetupPassword" placeholder="Minimum 6 characters" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 16px; box-sizing: border-box; margin-bottom: 10px;" />
-          <button id="setPasswordBtn" class="btn secondary" style="padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid var(--border); background: white; color: var(--navy); font-weight: 600; cursor: pointer; width: 100%;">
+          <input type="text" autocomplete="username" style="display:none" aria-hidden="true" value="" id="profileHiddenEmail" />
+          <input type="password" id="profileSetupPassword" name="new-password" autocomplete="new-password" placeholder="Minimum 6 characters" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 16px; box-sizing: border-box; margin-bottom: 10px;" required />
+          <button type="submit" id="setPasswordBtn" class="btn secondary" style="padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid var(--border); background: white; color: var(--navy); font-weight: 600; cursor: pointer; width: 100%;">
             Save Password
           </button>
           <p id="passwordMessage" style="font-size: 0.85rem; font-weight: 600; margin-top: 8px; min-height: 16px;"></p>
-        </div>
+        </form>
       </div>
     </div>
   </div>
