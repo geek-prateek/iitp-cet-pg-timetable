@@ -432,10 +432,12 @@ function renderToday() {
     }
 
     return `
-    <div class="today-item" style="display: flex; align-items: center; gap: 12px; ${item.cancelled ? 'opacity: 0.6;' : ''}" onclick="scrollToTimetableClass('${course.id}', '${item.time}', '${today}')">
-      <strong>${item.time}</strong>
-      <span style="${item.cancelled ? 'text-decoration: line-through;' : ''}">${course.shortName}${item.showLabTag ? " · Lab" : ""}</span>
-      ${item.cancelled ? '<span style="color: #dc2626; font-weight: bold; margin-left: auto;">Cancelled</span>' : controls}
+    <div class="today-item" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; ${item.cancelled ? 'opacity: 0.6;' : ''}" onclick="scrollToTimetableClass('${course.id}', '${item.time}', '${today}')">
+      <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1;">
+        <strong>${item.time}</strong>
+        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${item.cancelled ? 'text-decoration: line-through;' : ''}">${course.shortName}${item.showLabTag ? " · Lab" : ""}</span>
+      </div>
+      ${item.cancelled ? '<span style="color: #dc2626; font-weight: bold; flex-shrink: 0;">Cancelled</span>' : `<div style="flex-shrink: 0;">${controls}</div>`}
     </div>
     `;
   }).join("");
