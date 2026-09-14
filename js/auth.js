@@ -312,7 +312,7 @@ if (saveProfileBtn) {
             
             // FIX: Update local memory so opening settings works immediately
             currentUserDoc = profileData;
-            window.initChatListener();
+            // Teams loaded on demand
             
             profileOverlay.style.display = "none";
             mainApp.style.display = "block";
@@ -332,193 +332,94 @@ if (saveProfileBtn) {
     });
 }
 
-function formatMessageText(text) {
-    // 1. Escape HTML to prevent XSS attacks (Security)
-    const div = document.createElement("div");
-    div.textContent = text;
-    const escapedText = div.innerHTML;
-
-    // 2. Convert URLs into clickable anchor tags
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return escapedText.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; word-break: break-all;">$1</a>');
-}
-
-let chatInitialized = false;
-
-window.initChatListener = () => {
-    if (!currentUserDoc || chatInitialized) return;
-    
-    // Request Browser Notification Permission
-    if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
-    }
-
-    const chatGroupName = document.getElementById("chatGroupName");
-    const chatMessages = document.getElementById("chatMessages");
-    chatGroupName.textContent = `${currentUserDoc.degree} - ${currentUserDoc.specialization}`;
-    
-    const q = query(collection(db, "chats", currentUserDoc.batchGroupId, "messages"), orderBy("timestamp"));
-    
-    let isInitialLoad = true;
-    chatInitialized = true;
-    
-    unsubChat = onSnapshot(q, (snapshot) => {
-        chatMessages.innerHTML = "";
-        if (snapshot.empty) {
-            chatMessages.innerHTML = `<p class="muted" style="text-align: center; font-size: 0.9rem; margin-top: 20px;">Welcome to your class group! Send a message to start.</p>`;
-            isInitialLoad = false;
-            return;
-        }
-        
-        let hasNewExternalMessage = false;
-        
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const isMe = data.email === auth.currentUser.email;
-            const rollNumber = data.email.split('@')[0];
-            
-            // Check for notifications
-            if (!isInitialLoad && !isMe) {
-                // If this specific doc is new (since last snapshot)
-                // Firestore snapshot sends all docs, but we can rely on isInitialLoad
-                // for basic notification when the DB updates.
-                hasNewExternalMessage = true;
-            }
-            
-            const bubble = document.createElement("div");
-            bubble.style.cssText = `max-width: 75%; padding: 10px 14px; border-radius: 12px; margin-bottom: 4px; display: inline-block; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.1);`;
-            
-            if (isMe) {
-                bubble.style.background = "#dcf8c6";
-                bubble.style.alignSelf = "flex-end";
-                bubble.style.borderBottomRightRadius = "0";
-            } else {
-                bubble.style.background = "white";
-                bubble.style.alignSelf = "flex-start";
-                bubble.style.borderBottomLeftRadius = "0";
-            }
-            
-            let html = "";
-            if (!isMe) {
-                html += `<div style="font-size: 0.75rem; color: var(--navy); font-weight: bold; margin-bottom: 4px;">${rollNumber}</div>`;
-            }
-            
-            const safeFormattedText = formatMessageText(data.text);
-            html += `<div style="font-size: 0.95rem; line-height: 1.4;">${safeFormattedText}</div>`;
-            
-            if (data.timestamp) {
-                const date = data.timestamp.toDate();
-                const timeString = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                html += `<div style="font-size: 0.65rem; color: #667781; text-align: right; margin-top: 4px;">${timeString}</div>`;
-            }
-            
-            bubble.innerHTML = html;
-            chatMessages.appendChild(bubble);
-        });
-        
-        // Handle Notifications if chat is hidden
-        const chatOverlay = document.getElementById("chatOverlay");
-        if (hasNewExternalMessage && chatOverlay.style.display !== "flex") {
-            const chatBtn = document.getElementById("chatHeaderBtn");
-            if (chatBtn) {
-                chatBtn.innerHTML = `💬 Class Chat <span style="background: #ef4444; color: white; border-radius: 12px; padding: 2px 6px; font-size: 11px; margin-left: 4px; font-weight: bold;">New</span>`;
-            }
-            if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("New message in Class Chat", {
-                    body: "Check the timetable portal to reply.",
-                    icon: "assets/iitp-seal.png"
-                });
-            }
-        } else if (chatOverlay.style.display === "flex") {
-            // Scroll to bottom immediately if open
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        isInitialLoad = false;
-    });
-};
-
-window.openChat = () => {
+window.openTeamsGroup = () => {
     if (!currentUserDoc) {
         document.getElementById("profileOverlay").style.display = "flex";
     } else {
-        const chatOverlay = document.getElementById("chatOverlay");
-        chatOverlay.style.display = "flex";
-        
-        // Remove the New notification badge
-        const chatBtn = document.getElementById("chatHeaderBtn");
-        if (chatBtn) chatBtn.innerHTML = "💬 Class Chat";
-        
-        // Scroll to bottom
-        const chatMessages = document.getElementById("chatMessages");
-        setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 100);
+        const teamsOverlay = document.getElementById("teamsOverlay");
+        teamsOverlay.style.display = "flex";
+        loadTeamsGroup();
     }
 };
 
-const viewMembersBtn = document.getElementById("viewMembersBtn");
-if (viewMembersBtn) {
-    viewMembersBtn.addEventListener("click", async () => {
-        const overlay = document.getElementById("membersOverlay");
-        overlay.style.display = "flex";
-        const list = document.getElementById("membersList");
-        list.innerHTML = "<p class='muted' style='text-align: center; margin-top: 20px;'>Loading members...</p>";
-        
-        try {
-            const q = query(collection(db, "users"), where("batchGroupId", "==", currentUserDoc.batchGroupId));
-            const snap = await getDocs(q);
-            list.innerHTML = "";
-            
-            if (snap.empty) {
-                list.innerHTML = "<p class='muted'>No members found.</p>";
-                return;
-            }
-            
-            snap.forEach(docSnap => {
-                const data = docSnap.data();
-                const emailPrefix = data.email.split('@')[0];
-                const isMe = data.email === auth.currentUser.email;
-                const initial = emailPrefix.substring(0, 2).toUpperCase();
-                
-                list.innerHTML += `
-                <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">
-                        ${initial}
-                    </div>
-                    <div style="font-size: 0.95rem; font-weight: 500; color: #334155;">
-                        ${emailPrefix} ${isMe ? "<span style='color: #64748b; font-size: 0.8rem;'>(You)</span>" : ""}
-                    </div>
-                </div>`;
-            });
-        } catch(err) {
-            console.error(err);
-            list.innerHTML = "<p style='color: red; text-align: center;'>Failed to load members.</p>";
-        }
-    });
-}
-
-const sendChatBtn = document.getElementById("sendChatBtn");
-if (sendChatBtn) {
-    sendChatBtn.addEventListener("click", async () => {
-        const input = document.getElementById("chatInput");
-        const text = input.value.trim();
-        if (!text || !currentUserDoc) return;
-        
-        input.value = "";
-        
-        try {
-            await addDoc(collection(db, "chats", currentUserDoc.batchGroupId, "messages"), {
-                text: text,
-                email: auth.currentUser.email,
-                timestamp: serverTimestamp()
-            });
-        } catch (err) {
-            console.error("Error sending message:", err);
-        }
-    });
+async function loadTeamsGroup() {
+    const teamsContent = document.getElementById("teamsContent");
+    const teamsGroupName = document.getElementById("teamsGroupName");
     
-    document.getElementById("chatInput").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendChatBtn.click();
-    });
+    if (!currentUserDoc) return;
+    
+    teamsGroupName.textContent = `${currentUserDoc.degree} - ${currentUserDoc.specialization} (${currentUserDoc.session || '2026-27'})`;
+    teamsContent.innerHTML = "<p class='muted'>Loading group details...</p>";
+    
+    try {
+        const groupId = `teams_${createSlug(currentUserDoc.degree)}_${createSlug(currentUserDoc.specialization)}`;
+        const groupRef = doc(db, "class_groups", groupId);
+        const groupSnap = await getDoc(groupRef);
+        
+        if (groupSnap.exists() && groupSnap.data().link) {
+            // Group exists! Show Join button
+            const link = groupSnap.data().link;
+            teamsContent.innerHTML = `
+                <div style="background: #eff6ff; padding: 20px; border-radius: 12px; border: 1px solid #bfdbfe; width: 100%; box-sizing: border-box;">
+                    <p style="color: #1e3a8a; font-weight: 500; font-size: 0.95rem; margin-bottom: 20px;">
+                        An official Microsoft Teams group exists for your class!
+                    </p>
+                    <a href="${link}" target="_blank" rel="noopener noreferrer" style="display: block; background: #6264a7; color: white; text-decoration: none; padding: 14px 20px; border-radius: 8px; font-weight: 600; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        Join Microsoft Teams Group
+                    </a>
+                </div>
+            `;
+        } else {
+            // No group yet. Show creation prompt
+            teamsContent.innerHTML = `
+                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px dashed #cbd5e1; width: 100%; box-sizing: border-box; text-align: left;">
+                    <h3 style="margin-top: 0; color: #334155; font-size: 1.1rem;">No group exists yet!</h3>
+                    <p style="color: #475569; font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+                        Be the first to create a Group Chat or Team in Microsoft Teams for <strong>${currentUserDoc.specialization}</strong>, and paste the Invite Link here so your classmates can join.
+                    </p>
+                    <input type="url" id="teamsLinkInput" placeholder="https://teams.microsoft.com/l/..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; margin-bottom: 12px; outline: none; font-size: 15px;" />
+                    <button id="submitTeamsLinkBtn" class="btn primary" style="width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; background: var(--navy);">
+                        Save Invite Link
+                    </button>
+                    <p id="teamsLinkError" style="color: #dc2626; font-size: 0.85rem; margin-top: 8px; display: none;"></p>
+                </div>
+            `;
+            
+            document.getElementById("submitTeamsLinkBtn").addEventListener("click", async () => {
+                const input = document.getElementById("teamsLinkInput");
+                const errText = document.getElementById("teamsLinkError");
+                const link = input.value.trim();
+                
+                // Security Validation: Must be a Microsoft Teams link
+                if (!/^https:\/\/teams\.microsoft\.com\/.+/i.test(link)) {
+                    errText.textContent = "Invalid link! Must start with https://teams.microsoft.com/";
+                    errText.style.display = "block";
+                    return;
+                }
+                errText.style.display = "none";
+                document.getElementById("submitTeamsLinkBtn").textContent = "Saving...";
+                
+                try {
+                    await setDoc(groupRef, {
+                        link: link,
+                        degree: currentUserDoc.degree,
+                        specialization: currentUserDoc.specialization,
+                        createdBy: auth.currentUser.email,
+                        createdAt: serverTimestamp()
+                    });
+                    loadTeamsGroup(); // Reload UI
+                } catch (err) {
+                    console.error(err);
+                    errText.textContent = "Failed to save link. Ensure you have permissions.";
+                    errText.style.display = "block";
+                    document.getElementById("submitTeamsLinkBtn").textContent = "Save Invite Link";
+                }
+            });
+        }
+    } catch (err) {
+        console.error("Error loading Teams group:", err);
+        teamsContent.innerHTML = "<p style='color: red;'>Failed to load group details.</p>";
+    }
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -543,7 +444,7 @@ onAuthStateChanged(auth, async (user) => {
             const userSnap = await getDoc(doc(db, "users", user.uid));
             if (userSnap.exists()) {
                 currentUserDoc = userSnap.data();
-                window.initChatListener();
+                // initChatListener removed, Teams loaded on demand
             }
         } catch (err) {
             console.error("Firestore error:", err);
