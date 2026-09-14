@@ -479,6 +479,16 @@ function renderResources() {
 }
 
 document.getElementById("addResourceBtn")?.addEventListener("click", () => {
+  if (typeof window.requireAuth === "function") {
+    window.requireAuth(() => {
+      toggleResourceForm();
+    });
+  } else {
+    toggleResourceForm();
+  }
+});
+
+function toggleResourceForm() {
   const container = document.getElementById("resourceFormContainer");
   const subjSelect = document.getElementById("resSubject");
   if (subjSelect && subjSelect.options.length <= 2) {
@@ -490,7 +500,7 @@ document.getElementById("addResourceBtn")?.addEventListener("click", () => {
     });
   }
   container.style.display = container.style.display === "none" ? "block" : "none";
-});
+}
 
 document.getElementById("resourceForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -622,10 +632,26 @@ async function initApp(token) {
   renderAll();
 }
 
-// We expose this globally so auth.js can call it once the user is verified
+// Fetch timetable publicly on page load
+initApp(null);
+
+// We expose this globally so auth.js can fetch protected data once the user is verified
 window.loadSecureData = async (token) => {
-  await initApp(token);
   await fetchResources(token);
+};
+
+// Clear sensitive data on logout
+window.clearSecureData = () => {
+  RESOURCES = [];
+  const grid = document.getElementById("resourceGrid");
+  if (grid) {
+    grid.innerHTML = `
+      <div style="text-align: center; padding: 20px;">
+        <p class="muted" style="margin-bottom: 12px;">Sign in to access shared links for class resources, books, notes, and study materials.</p>
+        <button class="btn primary" onclick="window.requireAuth(() => window.openProfileSettings())" style="background-color: var(--navy); padding: 8px 16px;">👤 Sign In</button>
+      </div>
+    `;
+  }
 };
 
 
@@ -644,26 +670,28 @@ window.scrollToTimetableClass = function(courseId, time, day) {
 };
 
 window.openAssignmentsModal = function(courseId) {
-  const modal = document.getElementById('assignmentModal');
-  const course = getCourse(courseId);
-  if (!modal || !course) return;
+  window.requireAuth(() => {
+    const modal = document.getElementById('assignmentModal');
+    const course = getCourse(courseId);
+    if (!modal || !course) return;
 
-  document.getElementById('assignmentModalTitle').textContent = `Assignments: ${course.shortName}`;
-  const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === courseId);
-  
-  const listEl = document.getElementById('assignmentModalList');
-  if (courseAssignments.length === 0) {
-    listEl.innerHTML = `<li class="muted">No assignments available.</li>`;
-  } else {
-    listEl.innerHTML = courseAssignments.map(a => `
-      <li class="assignment-item">
-        <a href="${escapeHtml(a.url)}" target="_blank">📝 ${escapeHtml(a.title)}</a>
-        <div class="deadline">Due: ${escapeHtml(a.deadline)}</div>
-      </li>
-    `).join("");
-  }
-  
-  modal.showModal();
+    document.getElementById('assignmentModalTitle').textContent = `Assignments: ${course.shortName}`;
+    const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === courseId);
+    
+    const listEl = document.getElementById('assignmentModalList');
+    if (courseAssignments.length === 0) {
+      listEl.innerHTML = `<li class="muted">No assignments available.</li>`;
+    } else {
+      listEl.innerHTML = courseAssignments.map(a => `
+        <li class="assignment-item">
+          <a href="${escapeHtml(a.url)}" target="_blank">📝 ${escapeHtml(a.title)}</a>
+          <div class="deadline">Due: ${escapeHtml(a.deadline)}</div>
+        </li>
+      `).join("");
+    }
+    
+    modal.showModal();
+  });
 };
 
 function escapeHtml(str) {
