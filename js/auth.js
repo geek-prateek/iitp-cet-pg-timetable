@@ -91,6 +91,13 @@ async function handleIncomingLink() {
                 await signInWithEmailLink(auth, email, window.location.href);
                 window.localStorage.removeItem('emailForSignIn');
                 window.history.replaceState(null, "", window.location.pathname);
+                
+                // Show the password prompt modal
+                const promptModal = document.getElementById('passwordPromptModal');
+                if (promptModal) {
+                    promptModal.style.display = 'flex';
+                }
+
             } catch (error) {
                 console.error("Sign-in Error:", error);
                 showMessage("Error signing in. The link might have expired.", true);
@@ -170,6 +177,49 @@ if (setPasswordBtn) {
         } finally {
             setPasswordBtn.disabled = false;
             setPasswordBtn.textContent = "Save Password";
+        }
+    });
+}
+
+const promptSetPasswordBtn = document.getElementById("promptSetPasswordBtn");
+const promptSkipBtn = document.getElementById("promptSkipBtn");
+const passwordPromptModal = document.getElementById("passwordPromptModal");
+
+if (promptSkipBtn && passwordPromptModal) {
+    promptSkipBtn.addEventListener("click", () => {
+        passwordPromptModal.style.display = "none";
+    });
+}
+
+if (promptSetPasswordBtn && passwordPromptModal) {
+    promptSetPasswordBtn.addEventListener("click", async () => {
+        const passInput = document.getElementById("promptSetupPassword");
+        const msgEl = document.getElementById("promptPasswordMessage");
+        if (!passInput || !msgEl) return;
+
+        const newPassword = passInput.value;
+        if (newPassword.length < 6) {
+            msgEl.textContent = "Password must be at least 6 characters.";
+            msgEl.style.color = "#dc2626";
+            return;
+        }
+
+        promptSetPasswordBtn.disabled = true;
+        promptSetPasswordBtn.textContent = "Saving...";
+        
+        try {
+            await updatePassword(auth.currentUser, newPassword);
+            msgEl.textContent = "Success! You can use it next time.";
+            msgEl.style.color = "#16a34a";
+            setTimeout(() => {
+                passwordPromptModal.style.display = "none";
+            }, 1500);
+        } catch (error) {
+            console.error("Error setting password:", error);
+            msgEl.textContent = "Error setting password. Try again.";
+            msgEl.style.color = "#dc2626";
+            promptSetPasswordBtn.disabled = false;
+            promptSetPasswordBtn.textContent = "Set Password";
         }
     });
 }
