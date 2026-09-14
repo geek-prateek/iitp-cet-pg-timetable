@@ -647,7 +647,7 @@ window.clearSecureData = () => {
   if (grid) {
     grid.innerHTML = `
       <div style="text-align: center; padding: 20px;">
-        <p class="muted" style="margin-bottom: 12px;">Sign in to access shared class resources, books, and previous year questions.</p>
+        <p class="muted" style="margin-bottom: 12px;">Sign in to access shared links for class resources, books, notes, and study materials.</p>
         <button class="btn primary" onclick="window.requireAuth(() => window.openProfileSettings())" style="background-color: var(--navy); padding: 8px 16px;">👤 Sign In</button>
       </div>
     `;
