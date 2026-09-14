@@ -50,6 +50,14 @@ async function handleSendLink() {
         return;
     }
 
+    // Check cooldown
+    const cooldownUntil = window.localStorage.getItem('magicLinkCooldown');
+    if (cooldownUntil && Date.now() < parseInt(cooldownUntil)) {
+        const remainingSeconds = Math.ceil((parseInt(cooldownUntil) - Date.now()) / 1000);
+        showMessage(`Please wait ${remainingSeconds} seconds before sending another link.`, true);
+        return;
+    }
+
     sendLinkBtn.disabled = true;
     sendLinkBtn.textContent = "Sending...";
 
@@ -58,11 +66,15 @@ async function handleSendLink() {
         handleCodeInApp: true
     };
 
+    let success = false;
     try {
         await sendSignInLinkToEmail(auth, email, actionCodeSettings);
         window.localStorage.setItem('emailForSignIn', email);
+        // Set a 2-minute cooldown to prevent spamming the quota
+        window.localStorage.setItem('magicLinkCooldown', Date.now() + 120000);
         showMessage("Login link sent! Please check your inbox (and spam folder).");
         emailInput.value = "";
+        success = true;
     } catch (error) {
         console.error("Auth Error:", error);
         if (error.code === 'auth/unauthorized-domain') {
@@ -71,8 +83,12 @@ async function handleSendLink() {
             showMessage(error.message, true);
         }
     } finally {
-        sendLinkBtn.disabled = false;
-        sendLinkBtn.textContent = "Send Login Link";
+        if (success) {
+            sendLinkBtn.textContent = "Check your email";
+        } else {
+            sendLinkBtn.disabled = false;
+            sendLinkBtn.textContent = "Send Magic Link";
+        }
     }
 }
 
