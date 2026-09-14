@@ -15,7 +15,7 @@
   
   <!-- LOGIN SCREEN -->
   <div id="loginOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 16px; backdrop-filter: blur(5px);">
-    <div style="background: white; padding: 32px 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; text-align: center; box-sizing: border-box; position: relative; display: flex; flex-direction: column; align-items: center;">
+    <div style="background: white; padding: 32px 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; text-align: center; box-sizing: border-box; position: relative; display: flex; flex-direction: column; align-items: center;">
       <button onclick="document.getElementById('loginOverlay').style.display='none'" style="position: absolute; top: 16px; right: 20px; background: none; border: none; font-size: 28px; color: var(--muted); cursor: pointer; line-height: 1;">&times;</button>
       <img src="assets/iitp-seal.png" alt="IIT Patna" width="80" style="margin-bottom: 20px;" />
       <h2 style="color: var(--navy); margin-bottom: 8px; margin-top: 0;">Sign In</h2>
@@ -43,7 +43,7 @@
 
   <!-- PASSWORD PROMPT MODAL (AFTER MAGIC LINK) -->
   <div id="passwordPromptModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 16px; backdrop-filter: blur(5px);">
-    <div style="background: white; padding: 32px 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; text-align: center; box-sizing: border-box;">
+    <div style="background: white; padding: 32px 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 360px; max-height: 90vh; overflow-y: auto; text-align: center; box-sizing: border-box;">
       <h2 style="color: var(--navy); margin-bottom: 12px; margin-top: 0;">Create a Password?</h2>
       <p style="color: var(--muted); margin-bottom: 24px; line-height: 1.4; font-size: 0.95rem;">Tired of checking your email for magic links? Set a password now for instant login next time.</p>
       
@@ -136,11 +136,11 @@
   </style>
 
   <!-- LIVE CHAT OVERLAY -->
-  <div id="teamsOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
-    <div id="teamsContainer" style="background: white; width: 100%; max-width: 420px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; margin: 20px;">
+  <div id="teamsOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(2px); box-sizing: border-box;">
+    <div id="teamsContainer" style="background: white; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; border-radius: 16px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative;">
       
       <!-- Teams Header -->
-      <div style="background: var(--navy); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+      <div style="background: var(--navy); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; border-radius: 16px 16px 0 0;">
         <div>
           <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600; line-height: 1.2;">Class Group</h2>
           <p id="teamsGroupName" style="margin: 4px 0 0; font-size: 0.85rem; opacity: 0.85;">Microsoft Teams</p>
@@ -283,7 +283,7 @@
 
       <div class="course-grid" id="resourceGrid" style="margin-top: 24px;">
         <div style="text-align: center; padding: 20px;">
-          <p class="muted" style="margin-bottom: 12px;">Sign in to access shared class resources, books, and previous year questions.</p>
+          <p class="muted" style="margin-bottom: 12px;">Sign in to access shared links for class resources, books, notes, and study materials.</p>
           <button class="btn primary" onclick="window.requireAuth(() => window.openProfileSettings())" style="background-color: var(--navy); padding: 8px 16px;">👤 Sign In</button>
         </div>
       </div>
