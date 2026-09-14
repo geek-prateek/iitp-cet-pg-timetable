@@ -427,6 +427,14 @@ function renderToday() {
     </div>
     `;
   }).join("");
+
+  if (typeof window.ATTENDANCE === "undefined") {
+    todayClassesEl.innerHTML += `
+      <div class="muted" style="text-align:center; padding-top: 12px; margin-top: 8px; border-top: 1px dashed var(--border); font-size: 0.85rem; cursor: pointer;" onclick="window.requireAuth(() => window.openProfileSettings())">
+        🔒 Sign in to track your attendance
+      </div>
+    `;
+  }
 }
 
 function renderNotification() {
@@ -672,7 +680,7 @@ window.clearSecureData = () => {
   if (grid) {
     grid.innerHTML = `
       <div style="text-align: center; padding: 20px;">
-        <p class="muted" style="margin-bottom: 12px;">Sign in to access shared links for class resources, books, notes, and study materials.</p>
+        <p class="muted" style="margin-bottom: 12px;">Sign in to access shared resources, MS Teams groups, and track your daily attendance.</p>
         <button class="btn primary" onclick="window.requireAuth(() => window.openProfileSettings())" style="background-color: var(--navy); padding: 8px 16px;">👤 Sign In</button>
       </div>
     `;
