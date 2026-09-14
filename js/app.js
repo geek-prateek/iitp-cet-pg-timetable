@@ -296,15 +296,27 @@ function renderTimetable() {
 }
 
 function getAttendance(courseId) {
-  const data = localStorage.getItem(`attendance_${courseId}`);
-  return data ? JSON.parse(data) : { attended: 0, missed: 0 };
+  if (typeof window.ATTENDANCE !== "undefined" && window.ATTENDANCE[courseId]) {
+    return window.ATTENDANCE[courseId];
+  }
+  const local = localStorage.getItem(`attendance_${courseId}`);
+  return local ? JSON.parse(local) : { attended: 0, missed: 0 };
 }
 
 window.updateAttendance = function(courseId, type, delta) {
   const data = getAttendance(courseId);
   data[type] = Math.max(0, data[type] + delta);
-  localStorage.setItem(`attendance_${courseId}`, JSON.stringify(data));
+  
+  if (typeof window.ATTENDANCE !== "undefined") {
+    window.ATTENDANCE[courseId] = data;
+    if (typeof window.updateFirebaseAttendance === "function") {
+      window.updateFirebaseAttendance(window.ATTENDANCE);
+    }
+  } else {
+    localStorage.setItem(`attendance_${courseId}`, JSON.stringify(data));
+  }
   renderCourses();
+  renderToday();
 };
 
 function renderCourses() {
@@ -326,6 +338,18 @@ function renderCourses() {
     const total = att.attended + att.missed;
     const percent = total === 0 ? 0 : Math.round((att.attended / total) * 100);
 
+    let percentColor = "var(--text)";
+    let statusIcon = "";
+    if (total > 0) {
+      if (percent >= 75) {
+        percentColor = "var(--green)";
+        statusIcon = "🟢";
+      } else {
+        percentColor = "#dc2626";
+        statusIcon = "🔴";
+      }
+    }
+
     // Get Assignments for this course
     const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === course.id);
     let assignmentBtnHtml = "";
@@ -344,7 +368,7 @@ function renderCourses() {
       </div>
       <div class="attendance-tracker">
         <div class="attendance-header">
-          <span>Attendance: <strong>${percent}%</strong></span>
+          <span>Attendance: <strong style="color: ${percentColor};">${percent}%</strong> ${statusIcon}</span>
           <span style="font-size: 11px; color: var(--muted);">${att.attended}/${total} classes</span>
         </div>
         <div class="attendance-controls">
@@ -395,13 +419,36 @@ function renderToday() {
 
   todaySchedule.sort((a, b) => TIMES.indexOf(a.item.time) - TIMES.indexOf(b.item.time));
 
-  todayClassesEl.innerHTML = todaySchedule.map(({ item, course }) => `
-    <div class="today-item" style="${item.cancelled ? 'opacity: 0.6;' : ''}" onclick="scrollToTimetableClass('${course.id}', '${item.time}', '${today}')">
-      <strong>${item.time}</strong>
-      <span style="${item.cancelled ? 'text-decoration: line-through;' : ''}">${course.shortName}${item.showLabTag ? " · Lab" : ""}</span>
-      ${item.cancelled ? '<span style="color: #dc2626; font-weight: bold; margin-left: auto;">Cancelled</span>' : ''}
+  todayClassesEl.innerHTML = todaySchedule.map(({ item, course }) => {
+    let controls = '';
+    // If it's not cancelled and user has attendance feature loaded
+    if (!item.cancelled && typeof window.ATTENDANCE !== "undefined") {
+      controls = `
+        <div style="margin-left: auto; display: flex; gap: 4px;">
+          <button title="Mark Attended" onclick="event.stopPropagation(); updateAttendance('${course.id}', 'attended', 1)" style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 14px; cursor: pointer;">✅</button>
+          <button title="Mark Missed" onclick="event.stopPropagation(); updateAttendance('${course.id}', 'missed', 1)" style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 14px; cursor: pointer;">❌</button>
+        </div>
+      `;
+    }
+
+    return `
+    <div class="today-item" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; ${item.cancelled ? 'opacity: 0.6;' : ''}" onclick="scrollToTimetableClass('${course.id}', '${item.time}', '${today}')">
+      <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1;">
+        <strong>${item.time}</strong>
+        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${item.cancelled ? 'text-decoration: line-through;' : ''}">${course.shortName}${item.showLabTag ? " · Lab" : ""}</span>
+      </div>
+      ${item.cancelled ? '<span style="color: #dc2626; font-weight: bold; flex-shrink: 0;">Cancelled</span>' : `<div style="flex-shrink: 0;">${controls}</div>`}
     </div>
-  `).join("");
+    `;
+  }).join("");
+
+  if (typeof window.ATTENDANCE === "undefined") {
+    todayClassesEl.innerHTML += `
+      <div class="muted" style="text-align:center; padding-top: 12px; margin-top: 8px; border-top: 1px dashed var(--border); font-size: 0.85rem; cursor: pointer;" onclick="window.requireAuth(() => window.openProfileSettings())">
+        🔒 Sign in to track your attendance
+      </div>
+    `;
+  }
 }
 
 function renderNotification() {
@@ -647,7 +694,7 @@ window.clearSecureData = () => {
   if (grid) {
     grid.innerHTML = `
       <div style="text-align: center; padding: 20px;">
-        <p class="muted" style="margin-bottom: 12px;">Sign in to access shared links for class resources, books, notes, and study materials.</p>
+        <p class="muted" style="margin-bottom: 12px;">Sign in to access shared resources, MS Teams groups, and track your daily attendance.</p>
         <button class="btn primary" onclick="window.requireAuth(() => window.openProfileSettings())" style="background-color: var(--navy); padding: 8px 16px;">👤 Sign In</button>
       </div>
     `;
