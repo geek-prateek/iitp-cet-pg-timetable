@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged, signOut, signInWithEmailAndPassword, updatePassword } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -104,9 +104,88 @@ async function handleIncomingLink() {
 if (sendLinkBtn) {
     sendLinkBtn.addEventListener("click", handleSendLink);
 }
+
+const loginWithPasswordBtn = document.getElementById("loginWithPasswordBtn");
+if (loginWithPasswordBtn) {
+    loginWithPasswordBtn.addEventListener("click", async () => {
+        const email = emailInput.value.trim().toLowerCase();
+        const passwordInput = document.getElementById("loginPassword");
+        const password = passwordInput ? passwordInput.value : "";
+        
+        if (!email || !password) {
+            showMessage("Please enter both email and password.", true);
+            return;
+        }
+        if (!email.endsWith("@iitp.ac.in")) {
+            showMessage("Access denied. Only @iitp.ac.in emails are allowed.", true);
+            return;
+        }
+
+        loginWithPasswordBtn.disabled = true;
+        loginWithPasswordBtn.textContent = "Logging in...";
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            showMessage("Login successful!");
+        } catch (error) {
+            console.error("Password Login Error:", error);
+            showMessage("Invalid email or password. Use Magic Link if you haven't set a password.", true);
+        } finally {
+            loginWithPasswordBtn.disabled = false;
+            loginWithPasswordBtn.textContent = "Login";
+        }
+    });
+}
+
+const setPasswordBtn = document.getElementById("setPasswordBtn");
+if (setPasswordBtn) {
+    setPasswordBtn.addEventListener("click", async () => {
+        const passInput = document.getElementById("profileSetupPassword");
+        const msgEl = document.getElementById("passwordMessage");
+        if (!passInput || !msgEl) return;
+
+        const newPassword = passInput.value;
+        if (newPassword.length < 6) {
+            msgEl.textContent = "Password must be at least 6 characters.";
+            msgEl.style.color = "#dc2626";
+            return;
+        }
+
+        setPasswordBtn.disabled = true;
+        setPasswordBtn.textContent = "Saving...";
+        
+        try {
+            await updatePassword(auth.currentUser, newPassword);
+            msgEl.textContent = "Password set successfully! You can use it next time.";
+            msgEl.style.color = "#16a34a";
+            passInput.value = "";
+        } catch (error) {
+            console.error("Error setting password:", error);
+            if (error.code === 'auth/requires-recent-login') {
+                msgEl.textContent = "Please logout and login with Magic Link again to set a password.";
+            } else {
+                msgEl.textContent = "Error setting password. Try again.";
+            }
+            msgEl.style.color = "#dc2626";
+        } finally {
+            setPasswordBtn.disabled = false;
+            setPasswordBtn.textContent = "Save Password";
+        }
+    });
+}
 if (emailInput) {
     emailInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") handleSendLink();
+        if (e.key === "Enter") {
+            const pwd = document.getElementById("loginPassword");
+            if (pwd && pwd.value) loginWithPasswordBtn.click();
+            else handleSendLink();
+        }
+    });
+}
+const loginPasswordInput = document.getElementById("loginPassword");
+if (loginPasswordInput) {
+    loginPasswordInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") loginWithPasswordBtn.click();
     });
 }
 
