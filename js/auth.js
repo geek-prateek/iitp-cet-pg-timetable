@@ -30,6 +30,8 @@ const saveProfileBtn = document.getElementById("saveProfileBtn");
 let currentUserDoc = null;
 let unsubChat = null;
 
+const createSlug = (text) => text.toLowerCase().replace(/[^a-z0-9]/g, "");
+
 function showMessage(msg, isError = false) {
     if (!loginMessage) return;
     loginMessage.textContent = msg;
@@ -295,7 +297,6 @@ if (saveProfileBtn) {
         saveProfileBtn.disabled = true;
         saveProfileBtn.textContent = "Saving...";
 
-        const createSlug = (text) => text.toLowerCase().replace(/[^a-z0-9]/g, "");
         const batchGroupId = `chat_${createSlug(degree)}_${createSlug(spec)}_${createSlug(session)}`;
 
         const profileData = {
