@@ -423,7 +423,34 @@ async function loadTeamsGroup() {
     }
 }
 
+let pendingAuthCallback = null;
+
+window.requireAuth = (callback) => {
+    if (auth.currentUser && currentUserDoc) {
+        if (callback) callback();
+    } else if (auth.currentUser && !currentUserDoc) {
+        pendingAuthCallback = callback;
+        document.getElementById("profileOverlay").style.display = "flex";
+    } else {
+        pendingAuthCallback = callback;
+        document.getElementById("loginOverlay").style.display = "flex";
+    }
+};
+
+window.openProfileSettings = () => {
+    if (currentUserDoc) {
+        profileDegree.value = currentUserDoc.degree;
+        profileDegree.dispatchEvent(new Event('change'));
+        profileSpec.value = currentUserDoc.specialization;
+        profileSession.value = currentUserDoc.admissionSession;
+        saveProfileBtn.textContent = "Update Profile";
+    }
+    document.getElementById("profileOverlay").style.display = "flex";
+};
+
 onAuthStateChanged(auth, async (user) => {
+    const authActionBtn = document.getElementById("authActionBtn");
+
     if (user && user.email.endsWith("@iitp.ac.in")) {
         loginOverlay.style.display = "none";
         
@@ -434,8 +461,6 @@ onAuthStateChanged(auth, async (user) => {
         if (profileHiddenEmail) profileHiddenEmail.value = user.email;
 
         try {
-            // Always show timetable immediately after login
-            mainApp.style.display = "block";
             const token = await user.getIdToken();
             if (typeof window.loadSecureData === "function") {
                 window.loadSecureData(token);
@@ -445,42 +470,36 @@ onAuthStateChanged(auth, async (user) => {
             const userSnap = await getDoc(doc(db, "users", user.uid));
             if (userSnap.exists()) {
                 currentUserDoc = userSnap.data();
-                // initChatListener removed, Teams loaded on demand
+                
+                // Update Top Button to show Profile/Logout instead of Login
+                if (authActionBtn) {
+                    const initial = user.email.charAt(0).toUpperCase();
+                    authActionBtn.innerHTML = `⚙️ Profile (${initial})`;
+                    authActionBtn.onclick = () => window.openProfileSettings();
+                }
+
+                if (pendingAuthCallback) {
+                    pendingAuthCallback();
+                    pendingAuthCallback = null;
+                }
+            } else {
+                // Force profile creation
+                document.getElementById("profileOverlay").style.display = "flex";
             }
         } catch (err) {
             console.error("Firestore error:", err);
         }
         
         const actionsDiv = document.querySelector(".hero-content .actions");
-        if (actionsDiv && !document.getElementById("profileSettingsBtn")) {
-            const profileBtn = document.createElement("button");
-            profileBtn.id = "profileSettingsBtn";
-            profileBtn.className = "btn";
-            profileBtn.style.padding = "8px 14px";
-            profileBtn.style.fontSize = "14px";
-            profileBtn.style.display = "flex";
-            profileBtn.style.alignItems = "center";
-            profileBtn.style.gap = "6px";
-            profileBtn.innerHTML = "⚙️ Profile";
-            profileBtn.onclick = () => {
-                if (currentUserDoc) {
-                    profileDegree.value = currentUserDoc.degree;
-                    profileDegree.dispatchEvent(new Event('change')); // trigger dynamic spec update
-                    profileSpec.value = currentUserDoc.specialization;
-                    profileSession.value = currentUserDoc.admissionSession;
-                    saveProfileBtn.textContent = "Update Profile";
-                }
-                document.getElementById("profileOverlay").style.display = "flex";
-            };
-            actionsDiv.appendChild(profileBtn);
-        }
-
         if (actionsDiv && !document.getElementById("logoutBtn")) {
             const logoutBtn = document.createElement("button");
             logoutBtn.id = "logoutBtn";
             logoutBtn.className = "btn";
             logoutBtn.style.padding = "8px 14px";
             logoutBtn.style.fontSize = "14px";
+            logoutBtn.style.background = "transparent";
+            logoutBtn.style.border = "1px solid rgba(255,255,255,0.4)";
+            logoutBtn.style.color = "white";
             logoutBtn.textContent = "Logout";
             logoutBtn.onclick = () => {
                 currentUserDoc = null;
@@ -489,10 +508,16 @@ onAuthStateChanged(auth, async (user) => {
             actionsDiv.appendChild(logoutBtn);
         }
     } else {
-        loginOverlay.style.display = "flex";
-        mainApp.style.display = "none";
-        profileOverlay.style.display = "none";
+        // Logged out state
         currentUserDoc = null;
+        if (authActionBtn) {
+            authActionBtn.innerHTML = `👤 Sign In`;
+            authActionBtn.onclick = () => window.requireAuth(() => window.openProfileSettings());
+        }
+        
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) logoutBtn.remove();
+        
         if (user) {
             signOut(auth);
             showMessage("Unauthorized email domain logged out.", true);

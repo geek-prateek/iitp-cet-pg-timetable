@@ -622,9 +622,11 @@ async function initApp(token) {
   renderAll();
 }
 
-// We expose this globally so auth.js can call it once the user is verified
+// Fetch timetable publicly on page load
+initApp(null);
+
+// We expose this globally so auth.js can fetch protected data once the user is verified
 window.loadSecureData = async (token) => {
-  await initApp(token);
   await fetchResources(token);
 };
 
@@ -644,26 +646,28 @@ window.scrollToTimetableClass = function(courseId, time, day) {
 };
 
 window.openAssignmentsModal = function(courseId) {
-  const modal = document.getElementById('assignmentModal');
-  const course = getCourse(courseId);
-  if (!modal || !course) return;
+  window.requireAuth(() => {
+    const modal = document.getElementById('assignmentModal');
+    const course = getCourse(courseId);
+    if (!modal || !course) return;
 
-  document.getElementById('assignmentModalTitle').textContent = `Assignments: ${course.shortName}`;
-  const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === courseId);
-  
-  const listEl = document.getElementById('assignmentModalList');
-  if (courseAssignments.length === 0) {
-    listEl.innerHTML = `<li class="muted">No assignments available.</li>`;
-  } else {
-    listEl.innerHTML = courseAssignments.map(a => `
-      <li class="assignment-item">
-        <a href="${escapeHtml(a.url)}" target="_blank">📝 ${escapeHtml(a.title)}</a>
-        <div class="deadline">Due: ${escapeHtml(a.deadline)}</div>
-      </li>
-    `).join("");
-  }
-  
-  modal.showModal();
+    document.getElementById('assignmentModalTitle').textContent = `Assignments: ${course.shortName}`;
+    const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === courseId);
+    
+    const listEl = document.getElementById('assignmentModalList');
+    if (courseAssignments.length === 0) {
+      listEl.innerHTML = `<li class="muted">No assignments available.</li>`;
+    } else {
+      listEl.innerHTML = courseAssignments.map(a => `
+        <li class="assignment-item">
+          <a href="${escapeHtml(a.url)}" target="_blank">📝 ${escapeHtml(a.title)}</a>
+          <div class="deadline">Due: ${escapeHtml(a.deadline)}</div>
+        </li>
+      `).join("");
+    }
+    
+    modal.showModal();
+  });
 };
 
 function escapeHtml(str) {
