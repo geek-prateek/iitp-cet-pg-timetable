@@ -338,6 +338,18 @@ function renderCourses() {
     const total = att.attended + att.missed;
     const percent = total === 0 ? 0 : Math.round((att.attended / total) * 100);
 
+    let percentColor = "var(--text)";
+    let statusIcon = "";
+    if (total > 0) {
+      if (percent >= 75) {
+        percentColor = "var(--green)";
+        statusIcon = "🟢";
+      } else {
+        percentColor = "#dc2626";
+        statusIcon = "🔴";
+      }
+    }
+
     // Get Assignments for this course
     const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === course.id);
     let assignmentBtnHtml = "";
@@ -356,7 +368,7 @@ function renderCourses() {
       </div>
       <div class="attendance-tracker">
         <div class="attendance-header">
-          <span>Attendance: <strong>${percent}%</strong></span>
+          <span>Attendance: <strong style="color: ${percentColor};">${percent}%</strong> ${statusIcon}</span>
           <span style="font-size: 11px; color: var(--muted);">${att.attended}/${total} classes</span>
         </div>
         <div class="attendance-controls">
