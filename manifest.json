@@ -1,0 +1,22 @@
+{
+  "name": "IIT Patna Timetable Portal",
+  "short_name": "IITP Timetable",
+  "description": "IIT Patna Timetable Portal for PG students",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#0f3d91",
+  "icons": [
+    {
+      "src": "assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/iitp-seal.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
