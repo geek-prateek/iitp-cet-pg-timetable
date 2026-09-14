@@ -486,7 +486,11 @@ onAuthStateChanged(auth, async (user) => {
             const userSnap = await getDoc(doc(db, "users", user.uid));
             if (userSnap.exists()) {
                 currentUserDoc = userSnap.data();
-                
+
+                window.ATTENDANCE = currentUserDoc.attendance || {};
+                if(typeof window.renderToday === 'function') window.renderToday();
+                if(typeof window.renderCourses === 'function') window.renderCourses();
+
                 // Update Top Button to show Profile/Logout instead of Login
                 if (authActionBtn) {
                     const initial = user.email.charAt(0).toUpperCase();
@@ -545,3 +549,12 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 handleIncomingLink();
+
+window.updateFirebaseAttendance = async (attendanceObj) => {
+    if (!auth.currentUser) return;
+    try {
+        await setDoc(doc(db, "users", auth.currentUser.uid), { attendance: attendanceObj }, { merge: true });
+    } catch (e) {
+        console.error("Failed to sync attendance:", e);
+    }
+};

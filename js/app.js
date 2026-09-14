@@ -296,15 +296,27 @@ function renderTimetable() {
 }
 
 function getAttendance(courseId) {
-  const data = localStorage.getItem(`attendance_${courseId}`);
-  return data ? JSON.parse(data) : { attended: 0, missed: 0 };
+  if (typeof window.ATTENDANCE !== "undefined" && window.ATTENDANCE[courseId]) {
+    return window.ATTENDANCE[courseId];
+  }
+  const local = localStorage.getItem(`attendance_${courseId}`);
+  return local ? JSON.parse(local) : { attended: 0, missed: 0 };
 }
 
 window.updateAttendance = function(courseId, type, delta) {
   const data = getAttendance(courseId);
   data[type] = Math.max(0, data[type] + delta);
-  localStorage.setItem(`attendance_${courseId}`, JSON.stringify(data));
+  
+  if (typeof window.ATTENDANCE !== "undefined") {
+    window.ATTENDANCE[courseId] = data;
+    if (typeof window.updateFirebaseAttendance === "function") {
+      window.updateFirebaseAttendance(window.ATTENDANCE);
+    }
+  } else {
+    localStorage.setItem(`attendance_${courseId}`, JSON.stringify(data));
+  }
   renderCourses();
+  renderToday();
 };
 
 function renderCourses() {
@@ -395,13 +407,26 @@ function renderToday() {
 
   todaySchedule.sort((a, b) => TIMES.indexOf(a.item.time) - TIMES.indexOf(b.item.time));
 
-  todayClassesEl.innerHTML = todaySchedule.map(({ item, course }) => `
-    <div class="today-item" style="${item.cancelled ? 'opacity: 0.6;' : ''}" onclick="scrollToTimetableClass('${course.id}', '${item.time}', '${today}')">
+  todayClassesEl.innerHTML = todaySchedule.map(({ item, course }) => {
+    let controls = '';
+    // If it's not cancelled and user has attendance feature loaded
+    if (!item.cancelled && typeof window.ATTENDANCE !== "undefined") {
+      controls = `
+        <div style="margin-left: auto; display: flex; gap: 4px;">
+          <button title="Mark Attended" onclick="event.stopPropagation(); updateAttendance('${course.id}', 'attended', 1)" style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 14px; cursor: pointer;">✅</button>
+          <button title="Mark Missed" onclick="event.stopPropagation(); updateAttendance('${course.id}', 'missed', 1)" style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 14px; cursor: pointer;">❌</button>
+        </div>
+      `;
+    }
+
+    return `
+    <div class="today-item" style="display: flex; align-items: center; gap: 12px; ${item.cancelled ? 'opacity: 0.6;' : ''}" onclick="scrollToTimetableClass('${course.id}', '${item.time}', '${today}')">
       <strong>${item.time}</strong>
       <span style="${item.cancelled ? 'text-decoration: line-through;' : ''}">${course.shortName}${item.showLabTag ? " · Lab" : ""}</span>
-      ${item.cancelled ? '<span style="color: #dc2626; font-weight: bold; margin-left: auto;">Cancelled</span>' : ''}
+      ${item.cancelled ? '<span style="color: #dc2626; font-weight: bold; margin-left: auto;">Cancelled</span>' : controls}
     </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 function renderNotification() {
