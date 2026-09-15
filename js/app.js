@@ -295,26 +295,33 @@ function renderTimetable() {
   });
 }
 
+window.MARKED_TODAY = new Set();
+
 function getAttendance(courseId) {
   if (typeof window.ATTENDANCE !== "undefined" && window.ATTENDANCE[courseId]) {
     return window.ATTENDANCE[courseId];
   }
-  const local = localStorage.getItem(`attendance_${courseId}`);
-  return local ? JSON.parse(local) : { attended: 0, missed: 0 };
+  return { attended: 0, missed: 0 };
 }
 
-window.updateAttendance = function(courseId, type, delta) {
+window.updateAttendance = function(courseId, type, delta, time) {
+  if (typeof window.ATTENDANCE === "undefined") {
+    alert("Please sign in to track attendance.");
+    return;
+  }
+  
   const data = getAttendance(courseId);
   data[type] = Math.max(0, data[type] + delta);
   
-  if (typeof window.ATTENDANCE !== "undefined") {
-    window.ATTENDANCE[courseId] = data;
-    if (typeof window.updateFirebaseAttendance === "function") {
-      window.updateFirebaseAttendance(window.ATTENDANCE);
-    }
-  } else {
-    localStorage.setItem(`attendance_${courseId}`, JSON.stringify(data));
+  window.ATTENDANCE[courseId] = data;
+  if (typeof window.updateFirebaseAttendance === "function") {
+    window.updateFirebaseAttendance(window.ATTENDANCE);
   }
+  
+  if (time) {
+    window.MARKED_TODAY.add(courseId + '_' + time);
+  }
+  
   renderCourses();
   renderToday();
 };
@@ -356,16 +363,10 @@ function renderCourses() {
     if (courseAssignments.length > 0) {
       assignmentBtnHtml = `<button class="join-btn secondary" onclick="openAssignmentsModal('${course.id}')">Assignments (${courseAssignments.length})</button>`;
     }
-
-    card.innerHTML = `
-      <div class="course-type">${effectiveType === "regular" ? "Regular Course" : "Elective Course"}</div>
-      <h3>${course.name}</h3>
-      <div class="course-code">${course.code}</div>
-      <div class="course-prof">👨‍🏫 ${course.professor}</div>
-      <div class="link-row">
-        ${renderCourseLinks(course)}
-        ${assignmentBtnHtml}
-      </div>
+    
+    let attendanceHtml = "";
+    if (typeof window.ATTENDANCE !== "undefined") {
+      attendanceHtml = `
       <div class="attendance-tracker">
         <div class="attendance-header">
           <span>Attendance: <strong style="color: ${percentColor};">${percent}%</strong> ${statusIcon}</span>
@@ -384,6 +385,19 @@ function renderCourses() {
           </div>
         </div>
       </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div class="course-type">${effectiveType === "regular" ? "Regular Course" : "Elective Course"}</div>
+      <h3>${course.name}</h3>
+      <div class="course-code">${course.code}</div>
+      <div class="course-prof">👨‍🏫 ${course.professor}</div>
+      <div class="link-row">
+        ${renderCourseLinks(course)}
+        ${assignmentBtnHtml}
+      </div>
+      ${attendanceHtml}
     `;
     courseGridEl.appendChild(card);
   });
@@ -423,12 +437,16 @@ function renderToday() {
     let controls = '';
     // If it's not cancelled and user has attendance feature loaded
     if (!item.cancelled && typeof window.ATTENDANCE !== "undefined") {
-      controls = `
-        <div style="margin-left: auto; display: flex; gap: 4px;">
-          <button title="Mark Attended" onclick="event.stopPropagation(); updateAttendance('${course.id}', 'attended', 1)" style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 14px; cursor: pointer;">✅</button>
-          <button title="Mark Missed" onclick="event.stopPropagation(); updateAttendance('${course.id}', 'missed', 1)" style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 14px; cursor: pointer;">❌</button>
-        </div>
-      `;
+      if (window.MARKED_TODAY && window.MARKED_TODAY.has(course.id + '_' + item.time)) {
+        controls = `<span style="font-size: 13px; color: var(--green); font-weight: bold; background: #dcfce7; padding: 4px 8px; border-radius: 6px;">Marked ✅</span>`;
+      } else {
+        controls = `
+          <div style="margin-left: auto; display: flex; gap: 4px;">
+            <button title="Mark Attended" onclick="event.stopPropagation(); updateAttendance('${course.id}', 'attended', 1, '${item.time}')" style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 14px; cursor: pointer;">✅</button>
+            <button title="Mark Missed" onclick="event.stopPropagation(); updateAttendance('${course.id}', 'missed', 1, '${item.time}')" style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 14px; cursor: pointer;">❌</button>
+          </div>
+        `;
+      }
     }
 
     return `
@@ -690,6 +708,9 @@ window.loadSecureData = async (token) => {
 // Clear sensitive data on logout
 window.clearSecureData = () => {
   RESOURCES = [];
+  window.ATTENDANCE = undefined;
+  if (window.MARKED_TODAY) window.MARKED_TODAY.clear();
+  
   const grid = document.getElementById("resourceGrid");
   if (grid) {
     grid.innerHTML = `
@@ -699,6 +720,9 @@ window.clearSecureData = () => {
       </div>
     `;
   }
+  
+  if (typeof renderToday === "function") renderToday();
+  if (typeof renderCourses === "function") renderCourses();
 };
 
 
