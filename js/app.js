@@ -708,6 +708,9 @@ window.loadSecureData = async (token) => {
 // Clear sensitive data on logout
 window.clearSecureData = () => {
   RESOURCES = [];
+  window.ATTENDANCE = undefined;
+  if (window.MARKED_TODAY) window.MARKED_TODAY.clear();
+  
   const grid = document.getElementById("resourceGrid");
   if (grid) {
     grid.innerHTML = `
@@ -717,6 +720,9 @@ window.clearSecureData = () => {
       </div>
     `;
   }
+  
+  if (typeof renderToday === "function") renderToday();
+  if (typeof renderCourses === "function") renderCourses();
 };
 
 
