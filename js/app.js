@@ -295,7 +295,12 @@ function renderTimetable() {
   });
 }
 
-window.MARKED_TODAY = new Set();
+function initMarkedToday() {
+  const dateKey = getDateKey();
+  const markedStr = localStorage.getItem('iitp-attendance-marked-' + dateKey);
+  window.MARKED_TODAY = markedStr ? new Map(JSON.parse(markedStr)) : new Map();
+}
+initMarkedToday();
 
 function getAttendance(courseId) {
   if (typeof window.ATTENDANCE !== "undefined" && window.ATTENDANCE[courseId]) {
@@ -319,7 +324,31 @@ window.updateAttendance = function(courseId, type, delta, time) {
   }
   
   if (time) {
-    window.MARKED_TODAY.add(courseId + '_' + time);
+    window.MARKED_TODAY.set(courseId + '_' + time, type);
+    localStorage.setItem('iitp-attendance-marked-' + getDateKey(), JSON.stringify(Array.from(window.MARKED_TODAY.entries())));
+  }
+  
+  renderCourses();
+  renderToday();
+};
+
+window.undoAttendance = function(courseId, type, time) {
+  if (typeof window.ATTENDANCE === "undefined") {
+    alert("Please sign in to track attendance.");
+    return;
+  }
+  
+  const data = getAttendance(courseId);
+  data[type] = Math.max(0, data[type] - 1);
+  
+  window.ATTENDANCE[courseId] = data;
+  if (typeof window.updateFirebaseAttendance === "function") {
+    window.updateFirebaseAttendance(window.ATTENDANCE);
+  }
+  
+  if (time) {
+    window.MARKED_TODAY.delete(courseId + '_' + time);
+    localStorage.setItem('iitp-attendance-marked-' + getDateKey(), JSON.stringify(Array.from(window.MARKED_TODAY.entries())));
   }
   
   renderCourses();
@@ -438,7 +467,16 @@ function renderToday() {
     // If it's not cancelled and user has attendance feature loaded
     if (!item.cancelled && typeof window.ATTENDANCE !== "undefined") {
       if (window.MARKED_TODAY && window.MARKED_TODAY.has(course.id + '_' + item.time)) {
-        controls = `<span style="font-size: 13px; color: var(--green); font-weight: bold; background: #dcfce7; padding: 4px 8px; border-radius: 6px;">Marked ✅</span>`;
+        const markType = window.MARKED_TODAY.get(course.id + '_' + item.time);
+        const label = markType === 'attended' ? 'Attended ✅' : 'Missed ❌';
+        const color = markType === 'attended' ? 'var(--green)' : '#dc2626';
+        const bg = markType === 'attended' ? '#dcfce7' : '#fee2e2';
+        controls = `
+          <div style="margin-left: auto; display: flex; gap: 4px; align-items: center;">
+            <span style="font-size: 13px; color: ${color}; font-weight: bold; background: ${bg}; padding: 4px 8px; border-radius: 6px;">${label}</span>
+            <button title="Undo" onclick="event.stopPropagation(); undoAttendance('${course.id}', '${markType}', '${item.time}')" style="background: none; border: none; font-size: 14px; cursor: pointer; padding: 2px;">↩️</button>
+          </div>
+        `;
       } else {
         controls = `
           <div style="margin-left: auto; display: flex; gap: 4px;">
@@ -709,7 +747,10 @@ window.loadSecureData = async (token) => {
 window.clearSecureData = () => {
   RESOURCES = [];
   window.ATTENDANCE = undefined;
-  if (window.MARKED_TODAY) window.MARKED_TODAY.clear();
+  if (window.MARKED_TODAY) {
+    window.MARKED_TODAY.clear();
+    localStorage.removeItem('iitp-attendance-marked-' + getDateKey());
+  }
   
   const grid = document.getElementById("resourceGrid");
   if (grid) {
