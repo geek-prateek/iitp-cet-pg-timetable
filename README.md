@@ -11,18 +11,19 @@ Designed to simplify schedule management, consolidate academic resources, reduce
 
 ## ✨ Features
 
+- **🔐 Secure Authentication:** Firebase Authentication restricted to `@iitp.ac.in` emails (Magic Link & Password support).
 - **Interactive Timetable:** Weekly class schedules with support for regular courses, electives, labs, and direct meeting/lab links.
 - **🎓 Multi-Program Support:** Program-specific timetables for multiple IIT Patna CET PG programmes, including M.Tech AI & DSE, M.Tech CSE, M.Tech Cloud Computing, M.Tech Blockchain Technology & Big Data, and M.S. programmes.
-- **📚 Resource Hub:** Subject-wise access to community-shared notes, reference materials, useful GitHub repositories, Google Drive links, and other study resources.
+- **🤝 Microsoft Teams Integration:** Discover, create, and join official Microsoft Teams groups for your specific program and specialization.
+- **📚 Community Resource Hub:** Subject-wise access to community-shared notes, reference materials, and study resources fetched from a centralized MongoDB store.
 - **🔗 Course Links:** Quick access to Moodle, Microsoft Teams, course materials, syllabi, and other academic links.
 - **📝 Assignment Tracker:** Track upcoming assignment deadlines and pending deliverables by course.
-- **📊 Attendance Tracker:** Client-side `+` / `-` attendance tracking stored locally in the browser.
-- **🔔 Schedule Updates:** Important timetable updates, schedule changes, and class cancellations are highlighted for students.
+- **📊 Cloud-Synced Attendance:** Cloud-backed `+` / `-` attendance tracking stored in Firestore, so your attendance is synced across devices.
+- **🔔 Schedule Updates:** Important timetable updates, schedule changes, and class cancellations are dynamically fetched and highlighted for students.
 - **🎨 Course Mapping:** Visual distinction between Regular and Elective courses with dedicated course color-coding.
-- **🎯 Program & Elective Selection:** Personalize the timetable by selecting your programme and preferred elective.
-- **💾 State Persistence:** Elective preferences, attendance data, and user settings persist using `localStorage`.
+- **🎯 Profile Personalization:** Personalize the platform by setting your Degree, Specialization, Session, and preferred electives.
 - **📱 Responsive UI:** Lightweight, responsive interface designed for both mobile and desktop browsers.
-- **⚡ Zero Backend:** Static architecture with no application server or database dependency.
+- **⚡ Serverless Architecture:** Powered by Vercel for fast delivery, MongoDB for dynamic timetable/resource management, and Firebase for authentication & user data.
 
 ---
 
@@ -89,14 +90,14 @@ Open `index.html` in a modern web browser.
 
 ## ⚙️ Updating the Timetable
 
-Timetable and course configuration are maintained in modular JavaScript files.
+Timetable data, including courses, schedules, and assignments, is now managed dynamically via the centralized **Timetable Admin Panel** and stored in MongoDB.
 
-Edit `js/courses.js`:
+The local `js/courses.js` file serves as a fallback when the dynamic API is unreachable:
 
 - `COURSES` — course names, faculty mappings, meeting links, and course information.
 - `SCHEDULE` — days, time slots, course IDs, and lab details.
 
-Programme-specific configurations can be extended as additional IIT Patna CET PG programmes are added.
+Programme-specific configurations can be managed centrally by the administrators and instantly reflect on the platform without requiring code redeployment.
 
 ---
 
