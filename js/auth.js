@@ -488,6 +488,22 @@ onAuthStateChanged(auth, async (user) => {
                 currentUserDoc = userSnap.data();
 
                 window.ATTENDANCE = currentUserDoc.attendance || {};
+                
+                // Sync MARKED_TODAY for today's tick/cross marks
+                if (typeof window.getDateKey === 'function') {
+                    const todayKey = window.getDateKey();
+                    if (currentUserDoc.markedTodayDate === todayKey && currentUserDoc.markedTodayData) {
+                        try {
+                            const parsedMap = new Map(JSON.parse(currentUserDoc.markedTodayData));
+                            // Merge with existing local storage to preserve offline marks if any, or just overwrite
+                            window.MARKED_TODAY = parsedMap;
+                            localStorage.setItem('iitp-attendance-marked-' + todayKey, currentUserDoc.markedTodayData);
+                        } catch (e) {
+                            console.error("Error parsing markedTodayData from Firebase:", e);
+                        }
+                    }
+                }
+
                 if(typeof window.renderToday === 'function') window.renderToday();
                 if(typeof window.renderCourses === 'function') window.renderCourses();
 
@@ -553,7 +569,15 @@ handleIncomingLink();
 window.updateFirebaseAttendance = async (attendanceObj) => {
     if (!auth.currentUser) return;
     try {
-        await setDoc(doc(db, "users", auth.currentUser.uid), { attendance: attendanceObj }, { merge: true });
+        const updateData = { attendance: attendanceObj };
+        
+        // Also save MARKED_TODAY so tick/cross tags sync across devices for the same day
+        if (typeof window.getDateKey === "function" && window.MARKED_TODAY) {
+            updateData.markedTodayDate = window.getDateKey();
+            updateData.markedTodayData = JSON.stringify(Array.from(window.MARKED_TODAY.entries()));
+        }
+        
+        await setDoc(doc(db, "users", auth.currentUser.uid), updateData, { merge: true });
     } catch (e) {
         console.error("Failed to sync attendance:", e);
     }
