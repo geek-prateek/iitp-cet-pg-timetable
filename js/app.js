@@ -319,13 +319,14 @@ window.updateAttendance = function(courseId, type, delta, time) {
   data[type] = Math.max(0, data[type] + delta);
   
   window.ATTENDANCE[courseId] = data;
-  if (typeof window.updateFirebaseAttendance === "function") {
-    window.updateFirebaseAttendance(window.ATTENDANCE);
-  }
   
   if (time) {
     window.MARKED_TODAY.set(courseId + '_' + time, type);
     localStorage.setItem('iitp-attendance-marked-' + getDateKey(), JSON.stringify(Array.from(window.MARKED_TODAY.entries())));
+  }
+  
+  if (typeof window.updateFirebaseAttendance === "function") {
+    window.updateFirebaseAttendance(window.ATTENDANCE);
   }
   
   renderCourses();
@@ -342,13 +343,14 @@ window.undoAttendance = function(courseId, type, time) {
   data[type] = Math.max(0, data[type] - 1);
   
   window.ATTENDANCE[courseId] = data;
-  if (typeof window.updateFirebaseAttendance === "function") {
-    window.updateFirebaseAttendance(window.ATTENDANCE);
-  }
   
   if (time) {
     window.MARKED_TODAY.delete(courseId + '_' + time);
     localStorage.setItem('iitp-attendance-marked-' + getDateKey(), JSON.stringify(Array.from(window.MARKED_TODAY.entries())));
+  }
+  
+  if (typeof window.updateFirebaseAttendance === "function") {
+    window.updateFirebaseAttendance(window.ATTENDANCE);
   }
   
   renderCourses();
