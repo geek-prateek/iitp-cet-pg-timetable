@@ -331,6 +331,64 @@
     </div>
   </dialog>
 
+  <!-- NOTIFICATION & REMINDER SETTINGS MODAL -->
+  <dialog id="alertSettingsModal" class="modal">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;">🔔 Notification Settings</h3>
+      <button class="modal-close" onclick="document.getElementById('alertSettingsModal').close()">&times;</button>
+    </div>
+    <div class="modal-body" style="display: flex; flex-direction: column; gap: 18px;">
+      
+      <!-- Option 1: College Announcements Toggle -->
+      <div style="border-bottom: 1px solid var(--border); padding-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <strong style="color: var(--navy); font-size: 15px;">📢 College Announcements</strong>
+          <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer; margin: 0;">
+            <input type="checkbox" id="toggleAnnouncements" style="opacity: 0; width: 0; height: 0;" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin: 0; line-height: 1.4;">
+          Instant alerts for timetable updates, holiday notices, and official announcements.
+        </p>
+      </div>
+
+      <!-- Option 2: Class Reminders Toggle -->
+      <div style="border-bottom: 1px solid var(--border); padding-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <strong style="color: var(--navy); font-size: 15px;">⏰ Class Reminders</strong>
+          <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer; margin: 0;">
+            <input type="checkbox" id="toggleClassReminders" style="opacity: 0; width: 0; height: 0;" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px; line-height: 1.4;">
+          Get an alert before each class starts so you never miss a lecture.
+        </p>
+        <div id="classReminderTimeRow" style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--text);">Remind before:</span>
+          <select id="classReminderMinutes" style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; background: white;">
+            <option value="5">5 minutes before</option>
+            <option value="10" selected>10 minutes before</option>
+            <option value="15">15 minutes before</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Option 3: Phone Calendar (.ics) Export -->
+      <div>
+        <strong style="color: var(--navy); font-size: 14px; display: block; margin-bottom: 4px;">📅 Phone Calendar Sync</strong>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px; line-height: 1.4;">
+          Add all your weekly classes with pre-set alarms to Google Calendar or Apple Calendar.
+        </p>
+        <button id="downloadCalendarBtn" type="button" class="btn secondary" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border); cursor: pointer; background: white; color: var(--navy);">
+          📥 Add to Google / Phone Calendar (.ics)
+        </button>
+      </div>
+
+    </div>
+  </dialog>
+
   </div> <!-- END MAIN APP -->
 
   <script type="module" src="js/auth.js?v=2.0"></script>
