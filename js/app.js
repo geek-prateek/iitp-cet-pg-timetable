@@ -651,26 +651,99 @@ document.getElementById("resourceForm")?.addEventListener("submit", async (e) =>
   }
 });
 
+function parseHolidayDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = String(dateStr).split("-").map(Number);
+  if (parts.length !== 3) return null;
+  return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
+}
+
 function renderHoliday() {
   const container = document.getElementById("upcomingHoliday");
   if (!container || !HOLIDAYS || HOLIDAYS.length === 0) return;
-  
+
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // reset time for accurate date comparison
-  
-  // Find the first holiday that is today or in the future
-  const upcoming = HOLIDAYS.find(h => new Date(h.date) >= today);
-  
-  if (upcoming) {
-    const holidayDate = new Date(upcoming.date);
-    const options = { weekday: 'short', month: 'short', day: 'numeric' };
-    const formattedDate = holidayDate.toLocaleDateString('en-IN', options);
-    
-    container.style.display = "flex";
-    container.innerHTML = `<span style="font-size: 1.1em; line-height: 1;">🎉</span> <div><span style="opacity: 0.85;">Upcoming:</span> <b>${upcoming.name}</b> <br/><span style="opacity: 0.75; font-size: 0.9em;">${formattedDate}</span></div>`;
-  } else {
+  today.setHours(0, 0, 0, 0);
+
+  // Parse and sort all holidays chronologically
+  const sorted = [...HOLIDAYS]
+    .map(h => ({ ...h, d: parseHolidayDate(h.date) }))
+    .filter(h => h.d !== null)
+    .sort((a, b) => a.d - b.d);
+
+  // Group consecutive days of the same festival (e.g. Diwali on 8th & 9th Nov, Chhath Puja on 15th & 16th Nov)
+  const groups = [];
+  const cleanStr = s => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  sorted.forEach(h => {
+    const prevGroup = groups[groups.length - 1];
+    if (prevGroup) {
+      const lastHoliday = prevGroup.items[prevGroup.items.length - 1];
+      const diffDays = Math.round((h.d - lastHoliday.d) / (1000 * 60 * 60 * 24));
+      const s1 = cleanStr(h.name);
+      const s2 = cleanStr(lastHoliday.name);
+      const isSameFestival = s1.includes(s2) || s2.includes(s1);
+
+      if (diffDays === 1 && isSameFestival) {
+        prevGroup.items.push(h);
+        prevGroup.endDate = h.d;
+        return;
+      }
+    }
+
+    groups.push({
+      name: h.name,
+      startDate: h.d,
+      endDate: h.d,
+      items: [h]
+    });
+  });
+
+  // Find the next upcoming or currently ongoing holiday group
+  const currentOrUpcoming = groups.find(g => g.endDate >= today);
+
+  if (!currentOrUpcoming) {
     container.style.display = "none";
+    return;
   }
+
+  const isOngoing = currentOrUpcoming.startDate <= today && today <= currentOrUpcoming.endDate;
+  const statusLabel = isOngoing ? "Ongoing Holiday" : "Upcoming";
+
+  let dateDisplay = "";
+  if (currentOrUpcoming.items.length === 1) {
+    dateDisplay = currentOrUpcoming.startDate.toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short"
+    });
+  } else {
+    const startDay = currentOrUpcoming.startDate.getDate();
+    const endDay = currentOrUpcoming.endDate.getDate();
+    const month = currentOrUpcoming.startDate.toLocaleDateString("en-IN", { month: "short" });
+    const startWk = currentOrUpcoming.startDate.toLocaleDateString("en-IN", { weekday: "short" });
+    const endWk = currentOrUpcoming.endDate.toLocaleDateString("en-IN", { weekday: "short" });
+
+    if (currentOrUpcoming.items.length === 2 && (endDay - startDay === 1)) {
+      dateDisplay = `${startDay} & ${endDay} ${month} (${startWk} & ${endWk})`;
+    } else {
+      dateDisplay = `${startDay}–${endDay} ${month} (${currentOrUpcoming.items.length} days)`;
+    }
+  }
+
+  let displayName = currentOrUpcoming.name;
+  if (/diwali/i.test(displayName)) displayName = "Diwali";
+  else if (/chhath/i.test(displayName)) displayName = "Chhath Puja";
+
+  container.style.display = "inline-flex";
+  container.innerHTML = `
+    <span style="font-size: 1.15em; line-height: 1; flex-shrink: 0;">🎉</span>
+    <div style="min-width: 0; line-height: 1.25;">
+      <span style="opacity: 0.85; font-size: 0.82em; font-weight: 600;">${statusLabel}:</span>
+      <strong style="color: #fff; font-size: 0.92em; margin-left: 2px;">${displayName}</strong>
+      <div style="opacity: 0.88; font-size: 0.8em; margin-top: 2px; font-weight: 500;">${dateDisplay}</div>
+    </div>
+  `;
 }
 
 function renderAll() {
