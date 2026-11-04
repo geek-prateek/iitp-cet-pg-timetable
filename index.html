@@ -172,6 +172,7 @@
         </div>
       </div>
       <div class="actions" style="display: flex; gap: 8px; flex-wrap: wrap; flex: 0 1 auto;">
+        <button id="notifyBtn" class="btn" type="button" style="background-color: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 12px; font-size: 14px; display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 8px;">🔔 Alerts</button>
         <button id="teamsHeaderBtn" class="btn primary" onclick="window.requireAuth(() => window.openTeamsGroup())" style="background-color: var(--navy); padding: 8px 14px; font-size: 14px; display: flex; align-items: center; gap: 6px;">👥 Class Group</button>
         <button id="authActionBtn" class="btn primary" onclick="window.requireAuth(() => window.openProfileSettings())" style="background-color: var(--navy); padding: 8px 14px; font-size: 14px; display: flex; align-items: center; gap: 6px;">👤 Sign In</button>
       </div>
@@ -179,6 +180,18 @@
   </header>
 
   <main class="container">
+    <!-- PUSH NOTIFICATION OPT-IN BANNER -->
+    <div id="pushPromptBanner" style="display: none; background: linear-gradient(135deg, #0f3d91, #1e40af); color: white; padding: 12px 18px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 14px rgba(15,61,145,0.18); align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px; font-size: 0.95rem;">
+        <span style="font-size: 1.4rem;">🔔</span>
+        <span><strong>Never miss a college announcement!</strong> Turn on mobile notifications for schedule changes and important updates.</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="enablePushBtn" class="btn primary" style="background: #22c55e; border-color: #22c55e; color: white; padding: 6px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer;">Turn On</button>
+        <button id="dismissPushBtn" style="background: none; border: none; color: rgba(255,255,255,0.8); font-size: 22px; cursor: pointer; padding: 2px 8px; line-height: 1;">&times;</button>
+      </div>
+    </div>
+
     <div class="notification-banner" style="display: none;"></div>
     <section class="topbar">
       <div>
@@ -321,6 +334,7 @@
   </div> <!-- END MAIN APP -->
 
   <script type="module" src="js/auth.js?v=2.0"></script>
+  <script type="module" src="js/notifications.js?v=1.0"></script>
   <script src="js/courses.js?v=2.2"></script>
   <script src="js/app.js?v=2.2"></script>
 </body>
