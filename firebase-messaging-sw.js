@@ -20,16 +20,21 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || payload.data?.title || '📢 IIT Patna Announcement';
   const body = payload.notification?.body || payload.data?.body || payload.data?.message || 'New announcement available.';
 
+  const basePath = self.location.pathname.replace(/\/[^\/]*$/, '/');
+  const iconUrl = new URL('assets/iitp-seal.png', self.location.origin + basePath).href;
+  const badgeUrl = new URL('assets/app-icon.svg', self.location.origin + basePath).href;
+  const targetUrl = payload.data?.url || (self.location.origin + basePath);
+
   const options = {
     body,
-    icon: '/assets/iitp-seal.png',
-    badge: '/assets/app-icon.svg',
+    icon: iconUrl,
+    badge: badgeUrl,
     tag: 'iitp-announcement',
     renotify: true,
     requireInteraction: true,
     vibrate: [200, 100, 200],
     data: {
-      url: payload.data?.url || '/'
+      url: targetUrl
     }
   };
 
@@ -39,7 +44,8 @@ messaging.onBackgroundMessage((payload) => {
 // Handle notification click to open / focus app
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || '/';
+  const basePath = self.location.pathname.replace(/\/[^\/]*$/, '/');
+  const targetUrl = event.notification.data?.url || (self.location.origin + basePath);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {

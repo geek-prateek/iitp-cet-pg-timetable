@@ -181,14 +181,14 @@
 
   <main class="container">
     <!-- PUSH NOTIFICATION OPT-IN BANNER -->
-    <div id="pushPromptBanner" style="display: none; background: linear-gradient(135deg, #0f3d91, #1e40af); color: white; padding: 12px 18px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 14px rgba(15,61,145,0.18); align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+    <div id="pushPromptBanner" class="push-prompt-banner" style="display: none;">
       <div style="display: flex; align-items: center; gap: 12px; font-size: 0.95rem;">
-        <span style="font-size: 1.4rem;">🔔</span>
-        <span><strong>Never miss a college announcement!</strong> Turn on mobile notifications for schedule changes and important updates.</span>
+        <span style="font-size: 1.5rem; flex-shrink: 0;">🔔</span>
+        <span style="line-height: 1.4;"><strong>Never miss a college announcement!</strong> Turn on mobile notifications for schedule changes and important updates.</span>
       </div>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <button id="enablePushBtn" class="btn primary" style="background: #22c55e; border-color: #22c55e; color: white; padding: 6px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer;">Turn On</button>
-        <button id="dismissPushBtn" style="background: none; border: none; color: rgba(255,255,255,0.8); font-size: 22px; cursor: pointer; padding: 2px 8px; line-height: 1;">&times;</button>
+      <div style="display: flex; gap: 8px; align-items: center; justify-content: flex-end;">
+        <button id="enablePushBtn" class="btn primary" type="button" style="background: #22c55e; border-color: #22c55e; color: white; padding: 8px 18px; font-size: 14px; font-weight: 700; border-radius: 8px; cursor: pointer; min-height: 38px;">Turn On</button>
+        <button id="dismissPushBtn" type="button" style="background: none; border: none; color: rgba(255,255,255,0.85); font-size: 24px; cursor: pointer; padding: 4px 8px; line-height: 1;">&times;</button>
       </div>
     </div>
 

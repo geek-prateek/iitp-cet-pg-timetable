@@ -390,13 +390,13 @@ function downloadClassCalendarIcs() {
 window.downloadClassCalendarIcs = downloadClassCalendarIcs;
 
 
-// In-app visual notification toast
+// In-app visual notification toast - Mobile Optimized
 function showInAppToast(title, message) {
   let toast = document.getElementById("iitpAnnouncementToast");
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "iitpAnnouncementToast";
-    toast.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 99999; background: #0f3d91; color: white; padding: 14px 20px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); max-width: 360px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; border-left: 5px solid #22c55e; transition: all 0.3s ease;";
+    toast.style.cssText = "position: fixed; bottom: 16px; left: 16px; right: 16px; margin: 0 auto; z-index: 99999; background: #0f2f68; color: white; padding: 14px 18px; border-radius: 14px; box-shadow: 0 10px 32px rgba(0,0,0,0.3); width: calc(100% - 32px); max-width: 420px; box-sizing: border-box; font-size: 14px; display: flex; flex-direction: column; gap: 4px; border-left: 5px solid #22c55e; transition: all 0.3s ease;";
     document.body.appendChild(toast);
   }
 
