@@ -386,6 +386,10 @@ function downloadClassCalendarIcs() {
   showInAppToast("📅 Calendar Downloaded", "Open the downloaded .ics file to add alarms to your Google/Phone Calendar.");
 }
 
+// Expose globally so anyone can download calendar without sign-in
+window.downloadClassCalendarIcs = downloadClassCalendarIcs;
+
+
 // In-app visual notification toast
 function showInAppToast(title, message) {
   let toast = document.getElementById("iitpAnnouncementToast");
