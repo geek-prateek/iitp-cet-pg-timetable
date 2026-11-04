@@ -25,8 +25,10 @@ let HOLIDAYS = [
   { date: "2026-10-02", name: "Mahatma Gandhi's Birthday" },
   { date: "2026-10-19", name: "Dussehra (Mahasthami)" },
   { date: "2026-10-20", name: "Dussehra (Mahanavmi) / Vijay Dashmi" },
-  { date: "2026-11-08", name: "Diwali (Deepavali)" },
-  { date: "2026-11-16", name: "Pratihar Saptami / Surya Saptami (Chhath Puja)" },
+  { date: "2026-11-08", name: "Diwali" },
+  { date: "2026-11-09", name: "Diwali" },
+  { date: "2026-11-15", name: "Chhath Puja" },
+  { date: "2026-11-16", name: "Chhath Puja" },
   { date: "2026-11-24", name: "Guru Nanak's Birthday" },
   { date: "2026-12-25", name: "Christmas Day" }
 ];
