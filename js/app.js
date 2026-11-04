@@ -872,26 +872,28 @@ window.scrollToTimetableClass = function(courseId, time, day) {
 };
 
 window.openAssignmentsModal = function(courseId) {
-  const modal = document.getElementById('assignmentModal');
-  const course = getCourse(courseId);
-  if (!modal || !course) return;
+  window.requireAuth(() => {
+    const modal = document.getElementById('assignmentModal');
+    const course = getCourse(courseId);
+    if (!modal || !course) return;
 
-  document.getElementById('assignmentModalTitle').textContent = `Class Work: ${course.shortName}`;
-  const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === courseId);
-  
-  const listEl = document.getElementById('assignmentModalList');
-  if (courseAssignments.length === 0) {
-    listEl.innerHTML = `<li class="muted">No class work or tasks available.</li>`;
-  } else {
-    listEl.innerHTML = courseAssignments.map(a => `
-      <li class="assignment-item">
-        <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">📁 ${escapeHtml(a.title)}</a>
-        <div class="deadline">📅 Due: ${escapeHtml(a.deadline || "TBA")}</div>
-      </li>
-    `).join("");
-  }
-  
-  modal.showModal();
+    document.getElementById('assignmentModalTitle').textContent = `Class Work: ${course.shortName}`;
+    const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === courseId);
+    
+    const listEl = document.getElementById('assignmentModalList');
+    if (courseAssignments.length === 0) {
+      listEl.innerHTML = `<li class="muted">No class work or tasks available.</li>`;
+    } else {
+      listEl.innerHTML = courseAssignments.map(a => `
+        <li class="assignment-item">
+          <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">📁 ${escapeHtml(a.title)}</a>
+          <div class="deadline">📅 Due: ${escapeHtml(a.deadline || "TBA")}</div>
+        </li>
+      `).join("");
+    }
+    
+    modal.showModal();
+  });
 };
 
 function escapeHtml(str) {
