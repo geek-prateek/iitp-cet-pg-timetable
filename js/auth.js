@@ -421,6 +421,7 @@ async function loadTeamsGroup() {
                         link: link,
                         degree: currentUserDoc.degree,
                         specialization: currentUserDoc.specialization,
+                        session: currentUserDoc.session || currentUserDoc.admissionSession || '2026-27',
                         createdBy: auth.currentUser.email,
                         createdAt: serverTimestamp()
                     });
