@@ -19,6 +19,14 @@ const electiveSelectEl = document.getElementById("electiveSelect");
 
 let RESOURCES = [];
 
+// Expose timetable collections globally so alerts and reminders work 100% without sign-in
+window.PROGRAMS = PROGRAMS;
+window.COURSES = COURSES;
+window.SCHEDULE = SCHEDULE;
+window.DAYS = DAYS;
+window.TIMES = TIMES;
+window.HOLIDAYS = HOLIDAYS;
+
 function initSelectors() {
   programSelectEl.innerHTML = PROGRAMS.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
   programSelectEl.value = selectedProgram;
@@ -725,6 +733,13 @@ async function initApp(token) {
       HOLIDAYS = dynamicData.HOLIDAYS || HOLIDAYS;
       NOTIFICATION = dynamicData.notification || "";
       window.ASSIGNMENTS = dynamicData.ASSIGNMENTS || [];
+
+      window.PROGRAMS = PROGRAMS;
+      window.COURSES = COURSES;
+      window.SCHEDULE = SCHEDULE;
+      window.DAYS = DAYS;
+      window.TIMES = TIMES;
+      window.HOLIDAYS = HOLIDAYS;
     } else {
       console.error("Backend refused access. Invalid or missing token.");
     }
