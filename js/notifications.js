@@ -244,6 +244,15 @@ function checkUpcomingClassReminders() {
   if (typeof window.SCHEDULE === "undefined" || !window.SCHEDULE.length) return;
 
   const now = new Date();
+
+  // 🛑 Institute Holiday Check: Absolutely NO class reminders triggered on holidays/festivals!
+  const yr = now.getFullYear();
+  const mo = String(now.getMonth() + 1).padStart(2, "0");
+  const da = String(now.getDate()).padStart(2, "0");
+  const todayKey = `${yr}-${mo}-${da}`;
+  const isTodayHoliday = (window.HOLIDAYS || []).some(h => h.date === todayKey);
+  if (isTodayHoliday) return;
+
   const dayName = now.toLocaleDateString("en-US", { weekday: "long" });
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const reminderMinutes = parseInt(localStorage.getItem("iitp_class_reminder_minutes") || "10", 10);
@@ -352,6 +361,16 @@ function downloadClassCalendarIcs() {
 
     const rruleDay = dayToRRule[item.day] || "MO";
 
+    // Exclude institute holidays falling on this day from calendar recurrences
+    const holidayExDates = (window.HOLIDAYS || [])
+      .filter(h => {
+        if (!h.date) return false;
+        const [hy, hm, hd] = h.date.split("-").map(Number);
+        const hDate = new Date(hy, hm - 1, hd);
+        return hDate.toLocaleDateString("en-US", { weekday: "long" }) === item.day;
+      })
+      .map(h => `EXDATE;TZID=Asia/Kolkata:${h.date.replace(/-/g, "")}T${startH}${startM}00`);
+
     icsContent.push(
       "BEGIN:VEVENT",
       `UID:iitp-class-${item.course}-${item.day}-${startMin}-${idx}@iitp.ac.in`,
@@ -359,6 +378,7 @@ function downloadClassCalendarIcs() {
       `DTSTART;TZID=Asia/Kolkata:20260801T${startH}${startM}00`,
       `DTEND;TZID=Asia/Kolkata:20260801T${endH}${endM}00`,
       `RRULE:FREQ=WEEKLY;BYDAY=${rruleDay}`,
+      ...holidayExDates,
       `SUMMARY:🎓 ${course.shortName}${item.lab ? " (Lab)" : ""}`,
       `DESCRIPTION:${course.name}\\nFaculty: ${course.professor || "IIT Patna"}\\nMoodle: ${course.moodleUrl || "N/A"}`,
       "LOCATION:IIT Patna / MS Teams",
