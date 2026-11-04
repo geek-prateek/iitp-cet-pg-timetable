@@ -400,7 +400,7 @@ function renderCourses() {
     const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === course.id);
     let assignmentBtnHtml = "";
     if (courseAssignments.length > 0) {
-      assignmentBtnHtml = `<button class="join-btn secondary" onclick="openAssignmentsModal('${course.id}')">Assignments (${courseAssignments.length})</button>`;
+      assignmentBtnHtml = `<button class="join-btn secondary" onclick="openAssignmentsModal('${course.id}')">Class Work (${courseAssignments.length})</button>`;
     }
     
     let attendanceHtml = "";
@@ -872,28 +872,26 @@ window.scrollToTimetableClass = function(courseId, time, day) {
 };
 
 window.openAssignmentsModal = function(courseId) {
-  window.requireAuth(() => {
-    const modal = document.getElementById('assignmentModal');
-    const course = getCourse(courseId);
-    if (!modal || !course) return;
+  const modal = document.getElementById('assignmentModal');
+  const course = getCourse(courseId);
+  if (!modal || !course) return;
 
-    document.getElementById('assignmentModalTitle').textContent = `Assignments: ${course.shortName}`;
-    const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === courseId);
-    
-    const listEl = document.getElementById('assignmentModalList');
-    if (courseAssignments.length === 0) {
-      listEl.innerHTML = `<li class="muted">No assignments available.</li>`;
-    } else {
-      listEl.innerHTML = courseAssignments.map(a => `
-        <li class="assignment-item">
-          <a href="${escapeHtml(a.url)}" target="_blank">📝 ${escapeHtml(a.title)}</a>
-          <div class="deadline">Due: ${escapeHtml(a.deadline)}</div>
-        </li>
-      `).join("");
-    }
-    
-    modal.showModal();
-  });
+  document.getElementById('assignmentModalTitle').textContent = `Class Work: ${course.shortName}`;
+  const courseAssignments = (window.ASSIGNMENTS || []).filter(a => a.courseId === courseId);
+  
+  const listEl = document.getElementById('assignmentModalList');
+  if (courseAssignments.length === 0) {
+    listEl.innerHTML = `<li class="muted">No class work or tasks available.</li>`;
+  } else {
+    listEl.innerHTML = courseAssignments.map(a => `
+      <li class="assignment-item">
+        <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">📁 ${escapeHtml(a.title)}</a>
+        <div class="deadline">📅 Due: ${escapeHtml(a.deadline || "TBA")}</div>
+      </li>
+    `).join("");
+  }
+  
+  modal.showModal();
 };
 
 function escapeHtml(str) {
